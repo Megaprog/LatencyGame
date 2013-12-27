@@ -2,6 +2,8 @@
  * Copyright (C) 2013 Tomas Shestakov. <https://github.com/Megaprog/LatencyGame>
  */
 
+import akka.actor.ActorSystem
+
 /**
  * User: Tomas
  * Date: 27.12.13
@@ -9,6 +11,8 @@
  */
 object LatencyGame extends App {
   val DefaultPort = 8080
+
+  val system = ActorSystem
 
   val port = if (args.length > 0) args(0).toInt else DefaultPort
 

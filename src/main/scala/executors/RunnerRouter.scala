@@ -13,7 +13,11 @@ import akka.routing.RoundRobinRouter
  * Time: 21:26
  */
 object RunnerRouter {
+  val MaxThreads = 1000
 
-  def apply(actorRefFactory: ActorRefFactory, nThreads: Int): ActorRef = actorRefFactory.actorOf(Props[RunnerActor].withRouter(
-    RoundRobinRouter(nrOfInstances = nThreads)))
+  def apply(actorRefFactory: ActorRefFactory, nThreads: Int): ActorRef = nThreads match {
+    case 1                    => actorRefFactory.actorOf(Props[RunnerActor])
+    case n if n > MaxThreads  => actorRefFactory.actorOf(Props[RunnerActor].withRouter(RoundRobinRouter(nrOfInstances = n)))
+    case _                    => throw new IllegalArgumentException("Wrong threads number")
+  }
 }

@@ -5,7 +5,7 @@
 package executors
 
 import java.util.concurrent.Executor
-import akka.actor.ActorRef
+import akka.actor.{ActorRefFactory, ActorRef}
 
 /**
  * User: Tomas
@@ -13,6 +13,8 @@ import akka.actor.ActorRef
  * Time: 21:15
  */
 case class ExecutorToRunner(runner: ActorRef) extends Executor {
+
+  def this(actorRefFactory: ActorRefFactory, nThreads: Int) = this(RunnerRouter(actorRefFactory, nThreads))
 
   def execute(command: Runnable) {
     runner ! command
