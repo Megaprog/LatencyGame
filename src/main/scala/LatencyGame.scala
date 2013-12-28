@@ -3,6 +3,8 @@
  */
 
 import akka.actor.ActorSystem
+import executors.ExecutorToRunner
+import io.netty.channel.nio.NioEventLoopGroup
 
 /**
  * User: Tomas
@@ -12,9 +14,13 @@ import akka.actor.ActorSystem
 object LatencyGame extends App {
   val DefaultPort = 8080
 
-  val system = ActorSystem
+  val system = ActorSystem()
 
   val port = if (args.length > 0) args(0).toInt else DefaultPort
 
-  new GameServer(null, port).run()
+  new NettyServer(null, port,
+    new NioEventLoopGroup(1, new ExecutorToRunner(system, 1)),
+    new NioEventLoopGroup(4, new ExecutorToRunner(system, 4)),
+    new GamePipelineInitializer
+  ).run()
 }

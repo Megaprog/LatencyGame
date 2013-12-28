@@ -12,7 +12,7 @@ import akka.actor.{ActorRefFactory, ActorRef}
  * Date: 27.12.13
  * Time: 21:15
  */
-case class ExecutorToRunner(runner: ActorRef) extends Executor {
+class ExecutorToRunner(val runner: ActorRef) extends Executor {
 
   def this(actorRefFactory: ActorRefFactory, nThreads: Int) = this(RunnerRouter(actorRefFactory, nThreads))
 
