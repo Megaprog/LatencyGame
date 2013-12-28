@@ -2,9 +2,6 @@
  * Copyright (C) 2013 Tomas Shestakov. <https://github.com/Megaprog/LatencyGame>
  */
 
-import akka.actor.ActorSystem
-import executors.ExecutorToRunner
-import io.netty.channel.nio.NioEventLoopGroup
 import org.springframework.context.ApplicationContext
 import org.springframework.context.support.{ClassPathXmlApplicationContext, FileSystemXmlApplicationContext}
 
