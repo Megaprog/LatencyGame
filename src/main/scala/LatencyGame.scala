@@ -5,6 +5,8 @@
 import akka.actor.ActorSystem
 import executors.ExecutorToRunner
 import io.netty.channel.nio.NioEventLoopGroup
+import org.springframework.context.ApplicationContext
+import org.springframework.context.support.{ClassPathXmlApplicationContext, FileSystemXmlApplicationContext}
 
 /**
  * User: Tomas
@@ -12,15 +14,13 @@ import io.netty.channel.nio.NioEventLoopGroup
  * Time: 17:25
  */
 object LatencyGame extends App {
-  val DefaultPort = 8080
+  val DefaultContextName = "app-context.xml"
 
-  val system = ActorSystem()
+  val context: ApplicationContext = 
+    if (args.length > 0) new FileSystemXmlApplicationContext(args(0)) 
+    else new ClassPathXmlApplicationContext(DefaultContextName)
 
-  val port = if (args.length > 0) args(0).toInt else DefaultPort
+  val server = context.getBean("server", classOf[Runnable])
 
-  new NettyServer(null, port,
-    new NioEventLoopGroup(1, new ExecutorToRunner(system, 1)),
-    new NioEventLoopGroup(4, new ExecutorToRunner(system, 4)),
-    new GamePipelineInitializer
-  ).run()
+  server.run()
 }
