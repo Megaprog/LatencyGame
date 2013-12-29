@@ -2,7 +2,7 @@
  * Copyright (C) 2013 Tomas Shestakov. <https://github.com/Megaprog/LatencyGame>
  */
 
-import handlers.{NegotiatedLineBasedFrameDecoder, ClientHandler}
+import handlers.{CharacterDecoder, NegotiatedLineBasedFrameDecoder, ClientHandler}
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.{ChannelHandler, ChannelPipeline, ChannelInitializer}
 import io.netty.handler.codec.string.{StringEncoder, StringDecoder}
@@ -19,10 +19,7 @@ class TelnetPipelineInitializer(messageHandlerFactory: (SocketChannel) => Channe
   def initChannel(ch: SocketChannel) {
     val pipeline: ChannelPipeline = ch.pipeline
 
-    //Remove telnet negotiation bytes if it present and split text by lines
-    pipeline.addLast("framer", new NegotiatedLineBasedFrameDecoder(1024))
-
-    pipeline.addLast("decoder", TelnetPipelineInitializer.Decoder)
+    pipeline.addLast("decoder", new CharacterDecoder(TelnetPipelineInitializer.StringCharset))
     pipeline.addLast("encoder", TelnetPipelineInitializer.Encoder)
 
     //Business logic

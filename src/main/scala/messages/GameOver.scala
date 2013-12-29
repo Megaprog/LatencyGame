@@ -18,6 +18,6 @@ case class GameOver(players: Seq[ActorRef], winner: Option[ActorRef], reason: Ga
 object GameOver {
 
   object Reason extends Enumeration {
-    val Normal, FalseStart, TimeOut = Value
+    val Normal, FalseStart, Timeout = Value
   }
 }

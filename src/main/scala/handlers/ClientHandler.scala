@@ -15,11 +15,11 @@ import messages.{Disconnected, Connected}
  * Date: 28.12.13
  * Time: 14:10
  */
-class ClientHandler(clientActorRef: ActorRef) extends SimpleChannelInboundHandler[String] {
+class ClientHandler(clientActorRef: ActorRef) extends SimpleChannelInboundHandler[Character] {
   import ClientHandler.logger
 
-  def messageReceived(ctx: ChannelHandlerContext, msg: String) {
-    logger.info(msg)
+  def messageReceived(ctx: ChannelHandlerContext, msg: Character) {
+    logger.info(msg.toString)
 
     clientActorRef ! msg
   }

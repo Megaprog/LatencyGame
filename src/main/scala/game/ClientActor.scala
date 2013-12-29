@@ -15,6 +15,7 @@ import scala.Some
  * Time: 12:59
  */
 class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
+  var gameRef = Option.empty[ActorRef]
 
   def receive: Actor.Receive = {
     case Connected =>
@@ -26,6 +27,7 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
     case GameStart(_, _) =>
       send("Противник найден.")
       send("Нажмите пробел, когда увидите цифру 3")
+      gameRef = Some(sender)
 
     case GameOver(_, winner, reason) =>
       if (winner == Some(self)) {
@@ -43,12 +45,15 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
         else if (reason == GameOver.Reason.FalseStart) {
           send("Вы поспешили и проиграли")
         }
-        else if (reason == GameOver.Reason.TimeOut) {
+        else if (reason == GameOver.Reason.Timeout) {
           send("Время игры истекло, вы проиграли")
         }
       }
 
+      gameRef = None
       disconnect()
+
+    case input: Character => gameRef foreach(_ ! input)
   }
 
   def send(string: String) {

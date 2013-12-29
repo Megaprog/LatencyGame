@@ -31,7 +31,10 @@ class GameActor extends Actor {
 
       system.scheduler.scheduleOnce(timeout, self, GameTimeout)
 
-    case GameTimeout => gameOver(None, GameOver.Reason.TimeOut)
+    case GameTimeout => gameOver(None, GameOver.Reason.Timeout)
+
+    case input: Character =>
+      logger.info(s"$sender > $input")
   }
 
   def gameOver(winner: Option[ActorRef], reason: GameOver.Reason.Value) {

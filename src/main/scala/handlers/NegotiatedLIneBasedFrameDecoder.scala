@@ -19,9 +19,13 @@ class NegotiatedLineBasedFrameDecoder(maxLength: Int, stripDelimiter: Boolean, f
   def this(maxLength: Int) = this(maxLength, true, false)
 
   override def decode(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
-    skipNegotiation(buffer)
+    NegotiatedLineBasedFrameDecoder.skipNegotiation(buffer)
     super.decode(ctx, buffer)
   }
+
+}
+
+object NegotiatedLineBasedFrameDecoder {
 
   def skipNegotiation(in: ByteBuf) {
     while (in.isReadable) {
