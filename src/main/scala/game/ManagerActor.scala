@@ -25,7 +25,7 @@ class ManagerActor(playersInGame: Int, gameActorFactory: () => ActorRef) extends
 
       pending = sender :: pending
       if (pending.size >= playersInGame) {
-        gameActorFactory() ! GameStart(3 minutes, pending)
+        gameActorFactory() ! GameStart(1.minutes, pending)
         pending = List.empty
       }
 

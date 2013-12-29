@@ -15,18 +15,21 @@ import org.slf4j.LoggerFactory
  */
 class GameActor extends Actor {
   import GameActor.logger
+  import context._
 
   var players = Seq.empty[ActorRef]
   var manager = Option.empty[ActorRef]
 
   def receive: Actor.Receive = {
-    case GameStart(timeout, candidates) =>
+    case gameStart @ GameStart(timeout, candidates) =>
       logger.info(s"Game started with $candidates")
 
       players = candidates
       manager = Some(sender)
 
-      context.system.scheduler.scheduleOnce(timeout, self, GameTimeout)
+      players foreach(_ ! gameStart)
+
+      system.scheduler.scheduleOnce(timeout, self, GameTimeout)
 
     case GameTimeout => gameOver(None, GameOver.Reason.TimeOut)
   }
