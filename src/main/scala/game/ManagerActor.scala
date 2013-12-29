@@ -5,7 +5,7 @@
 package game
 
 import akka.actor.{ActorRef, Props, ActorRefFactory, Actor}
-import messages.{GameOver, GameRequest}
+import messages.{GameStart, GameOver, GameRequest}
 import org.slf4j.LoggerFactory
 
 /**
@@ -13,12 +13,21 @@ import org.slf4j.LoggerFactory
  * Date: 29.12.13
  * Time: 12:21
  */
-class ManagerActor(players: Int, gameActorFactory: (Seq[ActorRef]) => ActorRef) extends Actor {
+class ManagerActor(playersInGame: Int, gameActorFactory: () => ActorRef) extends Actor {
   import ManagerActor.logger
+  
+  var pending = List.empty[ActorRef]
 
   def receive: Actor.Receive = {
     case request @ GameRequest =>
       logger.info(s"$request from $sender")
+
+      pending = sender :: pending
+      if (pending.size >= playersInGame) {
+        gameActorFactory() ! GameStart(pending)
+        pending = List.empty
+      }
+
     case result @ GameOver => logger.info(result.toString())
   }
 }
@@ -26,6 +35,6 @@ class ManagerActor(players: Int, gameActorFactory: (Seq[ActorRef]) => ActorRef) 
 object ManagerActor {
   val logger = LoggerFactory.getLogger(classOf[ManagerActor])
 
-  def create(actorRefFactory: ActorRefFactory, players: Int, gameActorFactory: (Seq[ActorRef]) => ActorRef) =
-    actorRefFactory.actorOf(Props(classOf[ManagerActor], players, gameActorFactory))
+  def create(actorRefFactory: ActorRefFactory, playersInGame: Int, gameActorFactory: () => ActorRef) =
+    actorRefFactory.actorOf(Props(classOf[ManagerActor], playersInGame, gameActorFactory))
 }

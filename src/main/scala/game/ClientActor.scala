@@ -19,6 +19,7 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
     case Connected =>
       send("Привет! Попробую найти тебе противника")
       managerRef ! GameRequest
+
     case Disconnected => context.stop(self)
   }
 

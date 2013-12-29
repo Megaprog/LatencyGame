@@ -5,21 +5,25 @@
 package game
 
 import akka.actor.{Props, ActorRefFactory, ActorRef, Actor}
+import messages.GameStart
+import org.slf4j.LoggerFactory
 
 /**
  * User: Tomas
  * Date: 29.12.13
  * Time: 12:27
  */
-class GameActor(players: Seq[ActorRef]) extends Actor {
+class GameActor extends Actor {
+  import GameActor.logger
 
   def receive: Actor.Receive = {
-    case _ =>
+    case GameStart(players) =>
+      logger.info(s"Game started with $players")
   }
 }
 
 object GameActor {
+  val logger = LoggerFactory.getLogger(classOf[GameActor])
 
-  def factory(actorRefFactory: ActorRefFactory) =
-    (players: Seq[ActorRef]) => actorRefFactory.actorOf(Props(classOf[GameActor], players))
+  def factory(actorRefFactory: ActorRefFactory) = () => actorRefFactory.actorOf(Props[GameActor])
 }
