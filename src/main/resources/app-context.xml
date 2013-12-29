@@ -11,13 +11,14 @@
         <property name="properties">
             <value>
                 Port=8080
+                Players=2
                 ParentGroupThreads=1
                 ChildGroupThreads=4
             </value>
         </property>
     </bean>
 
-    <bean id="server" class="NettyServer">
+    <bean id="networkServer" class="NettyServer">
         <constructor-arg name="host" type="java.net.InetAddress"><null/></constructor-arg>
         <constructor-arg name="port" type="int" value="${Port}"/>
         <constructor-arg name="parentGroup" type="io.netty.channel.EventLoopGroup" ref="parentGroup"/>
@@ -29,7 +30,7 @@
         <constructor-arg name="nThreads" type="int" value="${ParentGroupThreads}"/>
         <constructor-arg name="executor" type="java.util.concurrent.Executor">
             <bean class="executors.ExecutorToRunner">
-                <constructor-arg name="actorRefFactory" type="akka.actor.ActorRefFactory" ref="system"/>
+                <constructor-arg name="actorRefFactory" type="akka.actor.ActorRefFactory" ref="actorSystem"/>
                 <constructor-arg name="nThreads" type="int" value="${ParentGroupThreads}"/>
             </bean>
         </constructor-arg>
@@ -39,14 +40,35 @@
         <constructor-arg name="nThreads" type="int" value="${ChildGroupThreads}"/>
         <constructor-arg name="executor" type="java.util.concurrent.Executor">
             <bean class="executors.ExecutorToRunner">
-                <constructor-arg name="actorRefFactory" type="akka.actor.ActorRefFactory" ref="system"/>
+                <constructor-arg name="actorRefFactory" type="akka.actor.ActorRefFactory" ref="actorSystem"/>
                 <constructor-arg name="nThreads" type="int" value="${ChildGroupThreads}"/>
             </bean>
         </constructor-arg>
     </bean>
 
-    <bean id="system" class="akka.actor.ActorSystem" factory-method="apply"/>
+    <bean id="actorSystem" class="akka.actor.ActorSystem" factory-method="apply"/>
 
-    <bean id="pipelineInitializer" class="GamePipelineInitializer"/>
+    <bean id="pipelineInitializer" class="TelnetPipelineInitializer">
+        <constructor-arg ref="clientHandlerFactory"/>
+    </bean>
+
+    <bean id="clientHandlerFactory" class="handlers.ClientHandler" factory-method="factory">
+        <constructor-arg ref="clientActorFactory"/>
+    </bean>
+
+    <bean id="clientActorFactory" class="game.ClientActor" factory-method="factory">
+        <constructor-arg ref="actorSystem"/>
+        <constructor-arg ref="managerActor"/>
+    </bean>
+
+    <bean id="managerActor" class="game.ManagerActor" factory-method="create">
+        <constructor-arg ref="actorSystem"/>
+        <constructor-arg value="${Players}"/>
+        <constructor-arg ref="gameActorFactory"/>
+    </bean>
+
+    <bean id="gameActorFactory" class="game.GameActor" factory-method="factory">
+        <constructor-arg ref="actorSystem"/>
+    </bean>
 
 </beans>

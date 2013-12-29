@@ -1,12 +1,12 @@
+/*
+ * Copyright (C) 2013 Tomas Shestakov. <https://github.com/Megaprog/LatencyGame>
+ */
+
 package handlers
 
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.{LineBasedFrameDecoder, ByteToMessageDecoder}
-
-/*
- * Copyright (C) 2013 Tomas Shestakov. <https://github.com/Megaprog/LatencyGame>
- */
 
 /**
  * User: Tomas
@@ -17,7 +17,6 @@ class NegotiatedLineBasedFrameDecoder(maxLength: Int, stripDelimiter: Boolean, f
     extends LineBasedFrameDecoder(maxLength, stripDelimiter, failFast) {
 
   def this(maxLength: Int) = this(maxLength, true, false)
-
 
   override def decode(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
     skipNegotiation(buffer)
