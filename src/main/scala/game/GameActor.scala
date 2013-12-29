@@ -5,7 +5,7 @@
 package game
 
 import akka.actor.{Props, ActorRefFactory, ActorRef, Actor}
-import messages.GameStart
+import messages.{GameOver, GameTimeout, GameStart}
 import org.slf4j.LoggerFactory
 
 /**
@@ -16,9 +16,27 @@ import org.slf4j.LoggerFactory
 class GameActor extends Actor {
   import GameActor.logger
 
+  var players = Seq.empty[ActorRef]
+  var manager = Option.empty[ActorRef]
+
   def receive: Actor.Receive = {
-    case GameStart(players) =>
-      logger.info(s"Game started with $players")
+    case GameStart(timeout, candidates) =>
+      logger.info(s"Game started with $candidates")
+
+      players = candidates
+      manager = Some(sender)
+
+      context.system.scheduler.scheduleOnce(timeout, self, GameTimeout)
+
+    case GameTimeout => gameOver(None, GameOver.Reason.TimeOut)
+  }
+
+  def gameOver(winner: Option[ActorRef], reason: GameOver.Reason.Value) {
+    val result = GameOver(players, winner, reason)
+    players foreach(_ ! result)
+    manager foreach(_ ! result)
+
+    context.stop(self)
   }
 }
 

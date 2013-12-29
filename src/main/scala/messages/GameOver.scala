@@ -11,4 +11,13 @@ import akka.actor.ActorRef
  * Date: 29.12.13
  * Time: 17:09
  */
-case class GameOver(players: Seq[ActorRef], winner: ActorRef)
+case class GameOver(players: Seq[ActorRef], winner: Option[ActorRef], reason: GameOver.Reason.Value) {
+
+}
+
+object GameOver {
+
+  object Reason extends Enumeration {
+    val Normal, FalseStart, TimeOut = Value
+  }
+}

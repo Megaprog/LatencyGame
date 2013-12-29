@@ -7,6 +7,7 @@ package game
 import akka.actor.{ActorRef, Props, ActorRefFactory, Actor}
 import messages.{GameStart, GameOver, GameRequest}
 import org.slf4j.LoggerFactory
+import scala.concurrent.duration._
 
 /**
  * User: Tomas
@@ -19,16 +20,16 @@ class ManagerActor(playersInGame: Int, gameActorFactory: () => ActorRef) extends
   var pending = List.empty[ActorRef]
 
   def receive: Actor.Receive = {
-    case request @ GameRequest =>
-      logger.info(s"$request from $sender")
+    case GameRequest =>
+      logger.info(s"Game request from $sender")
 
       pending = sender :: pending
       if (pending.size >= playersInGame) {
-        gameActorFactory() ! GameStart(pending)
+        gameActorFactory() ! GameStart(3 minutes, pending)
         pending = List.empty
       }
 
-    case result @ GameOver => logger.info(result.toString())
+    case result: GameOver => logger.info(result.toString)
   }
 }
 
@@ -36,5 +37,5 @@ object ManagerActor {
   val logger = LoggerFactory.getLogger(classOf[ManagerActor])
 
   def create(actorRefFactory: ActorRefFactory, playersInGame: Int, gameActorFactory: () => ActorRef) =
-    actorRefFactory.actorOf(Props(classOf[ManagerActor], playersInGame, gameActorFactory))
+    actorRefFactory.actorOf(Props(classOf[ManagerActor], playersInGame, gameActorFactory).withDispatcher("akka.io.pinned-dispatcher"))
 }
