@@ -10,7 +10,7 @@
     <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
         <property name="properties">
             <value>
-                Port=8080
+                Port=23
                 Players=2
                 Timeout=3
                 ParentGroupThreads=1
