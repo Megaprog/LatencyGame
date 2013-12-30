@@ -4,13 +4,15 @@
 
 package game
 
-import akka.actor.{Props, ActorRefFactory, ActorRef, Actor}
-import messages.{SpawnChar, GameOver, GameTimeout, GameStart}
+import akka.actor._
+import messages.{GameOver, GameTimeout}
 import org.slf4j.LoggerFactory
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
+import scala.Some
+import messages.GameStart
+import messages.SpawnChar
 
 /**
  * User: Tomas
@@ -18,22 +20,21 @@ import java.util.concurrent.TimeUnit
  * Time: 12:27
  */
 class GameActor extends Actor {
-  import GameActor.logger
+  import GameActor._
   import context._
 
   var gameData = Option.empty[GameData]
+  var timeoutTask = emptyCancellable
 
   def receive: Actor.Receive = {
     case gameStart @ GameStart(timeout, candidates) =>
       logger.info(s"Game started with $candidates")
 
       gameData = Some(createGameData(sender, candidates))
-      logger.info(gameData.get.toString)
-
       candidates foreach(_ ! gameStart)
 
       scheduleChar()
-      scheduleTimeout(timeout)
+      timeoutTask = scheduleTimeout(timeout)
 
     case spawnChar @ SpawnChar(char) =>
       logger.info(spawnChar.toString)
@@ -93,12 +94,18 @@ class GameActor extends Actor {
     }
 
     gameData = None
+    timeoutTask.cancel()
     context.stop(self)
   }
 }
 
 object GameActor {
   val logger = LoggerFactory.getLogger(classOf[GameActor])
+
+  val emptyCancellable = new Cancellable {
+    def isCancelled: Boolean = true
+    def cancel(): Boolean = false
+  }
 
   def factory(actorRefFactory: ActorRefFactory) = () => actorRefFactory.actorOf(Props[GameActor])
 }
