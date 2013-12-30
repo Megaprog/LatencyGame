@@ -5,8 +5,12 @@
 package game
 
 import akka.actor.{Props, ActorRefFactory, ActorRef, Actor}
-import messages.{GameOver, GameTimeout, GameStart}
+import messages.{SpawnChar, GameOver, GameTimeout, GameStart}
 import org.slf4j.LoggerFactory
+import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
+import scala.concurrent.duration.FiniteDuration
+import java.util.concurrent.TimeUnit
 
 /**
  * User: Tomas
@@ -17,19 +21,23 @@ class GameActor extends Actor {
   import GameActor.logger
   import context._
 
-  var players = Seq.empty[ActorRef]
-  var manager = Option.empty[ActorRef]
+  var gameData = Option.empty[GameData]
 
   def receive: Actor.Receive = {
     case gameStart @ GameStart(timeout, candidates) =>
       logger.info(s"Game started with $candidates")
 
-      players = candidates
-      manager = Some(sender)
+      gameData = Some(createGameData(sender, candidates))
+      candidates foreach(_ ! gameStart)
 
-      players foreach(_ ! gameStart)
+      scheduleChar()
+      scheduleTimeout(timeout)
 
-      system.scheduler.scheduleOnce(timeout, self, GameTimeout)
+    case spawnChar @ SpawnChar(char) =>
+      gameData foreach { data =>
+        data.players foreach(_ ! spawnChar)
+      }
+      scheduleChar()
 
     case GameTimeout => gameOver(None, GameOver.Reason.Timeout)
 
@@ -37,11 +45,37 @@ class GameActor extends Actor {
       logger.info(s"$sender > $input")
   }
 
-  def gameOver(winner: Option[ActorRef], reason: GameOver.Reason.Value) {
-    val result = GameOver(players, winner, reason)
-    players foreach(_ ! result)
-    manager foreach(_ ! result)
+  class GameData(val manager: ActorRef, val players: Seq[ActorRef], var characters: Traversable[Char], val targetChar: Char)
 
+  def createGameData(manager: ActorRef, candidates: Seq[ActorRef]) = {
+    new GameData(
+      manager,
+      candidates,
+      Random.shuffle((1 to 3).map(Character.forDigit(_, 10))),
+      '3')
+  }
+
+  def scheduleChar() {
+    gameData foreach { data =>
+      if (!data.characters.nonEmpty) {
+        system.scheduler.scheduleOnce(FiniteDuration(2 + Random.nextInt(3), TimeUnit.SECONDS), self, SpawnChar(data.characters.head))
+        data.characters = data.characters.tail
+      }
+    }
+  }
+
+  def scheduleTimeout(timeout: FiniteDuration) {
+    system.scheduler.scheduleOnce(timeout, self, GameTimeout)
+  }
+
+  def gameOver(winner: Option[ActorRef], reason: GameOver.Reason.Value) {
+    gameData foreach { data =>
+      val result = GameOver(data.players, winner, reason)
+      data.players foreach(_ ! result)
+      data.manager ! result
+    }
+
+    gameData = None
     context.stop(self)
   }
 }
