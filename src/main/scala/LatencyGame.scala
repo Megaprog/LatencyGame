@@ -17,7 +17,5 @@ object LatencyGame extends App {
     if (args.length > 0) new FileSystemXmlApplicationContext(args(0)) 
     else new ClassPathXmlApplicationContext(DefaultContextName)
 
-  val server = context.getBean("networkServer", classOf[Runnable])
-
-  server.run()
+  System.exit(context.getBean(classOf[Server]).start())
 }
