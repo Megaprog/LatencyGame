@@ -29,8 +29,8 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
       send("Нажмите пробел, когда увидите цифру 3")
       gameRef = Some(sender)
 
-    case GameOver(_, winner, reason) =>
-      if (winner == Some(self)) {
+    case GameOver(_, winners, reason) =>
+      if (winners.exists(_ == self)) {
         if (reason == GameOver.Reason.Normal) {
           send("Вы нажали пробел первым и победили")
         }
@@ -53,7 +53,11 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
       gameRef = None
       disconnect()
 
-    case input: Character => gameRef foreach(_ ! input)
+    case SpawnChar(char) => send(char.toString)
+
+    case input: Character =>
+      send("")
+      gameRef foreach(_ ! input)
   }
 
   def send(string: String) {

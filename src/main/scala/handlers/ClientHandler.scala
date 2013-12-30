@@ -19,8 +19,6 @@ class ClientHandler(clientActorRef: ActorRef) extends SimpleChannelInboundHandle
   import ClientHandler.logger
 
   def messageReceived(ctx: ChannelHandlerContext, msg: Character) {
-    logger.info(msg.toString)
-
     clientActorRef ! msg
   }
 

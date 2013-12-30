@@ -12,6 +12,7 @@
             <value>
                 Port=8080
                 Players=2
+                Timeout=3
                 ParentGroupThreads=1
                 ChildGroupThreads=4
             </value>
@@ -64,6 +65,7 @@
     <bean id="managerActor" class="game.ManagerActor" factory-method="create">
         <constructor-arg ref="actorSystem"/>
         <constructor-arg value="${Players}"/>
+        <constructor-arg value="${Timeout}"/>
         <constructor-arg ref="gameActorFactory"/>
     </bean>
 
