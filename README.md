@@ -1,7 +1,8 @@
 LatencyGame
 ===========
 
-Telnet game where winner determine by lower latency
+Telnet game where winner determine by lower latency.
+Written on Scala using Akka, Spring, Netty frameworks.
 
 Правила:
 
