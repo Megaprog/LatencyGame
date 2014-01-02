@@ -5,7 +5,7 @@
 import akka.actor.ActorRef
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.{EventLoopGroup, ChannelHandler, ChannelOption}
-import io.netty.channel.socket.nio.NioServerSocketChannel
+import io.netty.channel.socket.nio.NioSocketChannel
 import org.slf4j.LoggerFactory
 
 /**
@@ -21,7 +21,7 @@ class NettyClient(host: String, port: Int,
     try {
       val bootstrap = new Bootstrap()
           .group(eventGroup)
-          .channel(classOf[NioServerSocketChannel])
+          .channel(classOf[NioSocketChannel])
           .option[java.lang.Boolean](ChannelOption.SO_KEEPALIVE, true)
           .handler(initializer)
 
