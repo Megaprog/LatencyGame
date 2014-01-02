@@ -5,7 +5,7 @@
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.{EventLoopGroup, ChannelHandler, ChannelOption}
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import java.net.InetAddress
+import java.net.{InetSocketAddress, InetAddress}
 import org.slf4j.LoggerFactory
 
 /**
@@ -13,8 +13,9 @@ import org.slf4j.LoggerFactory
  * Date: 27.12.13
  * Time: 17:27
  */
-class NettyServer(val host: InetAddress, val port: Int,
-                  parentGroup: EventLoopGroup, childGroup: EventLoopGroup, val childHandler: ChannelHandler) extends Server {
+class NettyServer(port: Int,
+                  parentGroup: EventLoopGroup, childGroup: EventLoopGroup,
+                  initializer: ChannelHandler) extends Server {
 
   def start() = {
     var exitCode = 0
@@ -23,8 +24,8 @@ class NettyServer(val host: InetAddress, val port: Int,
       val bootstrap = new ServerBootstrap()
           .group(parentGroup, childGroup)
           .channel(classOf[NioServerSocketChannel])
-          .childHandler(childHandler)
-              .childOption(ChannelOption.SO_KEEPALIVE, true.asInstanceOf[java.lang.Boolean])
+          .childHandler(initializer)
+              .childOption[java.lang.Boolean](ChannelOption.SO_KEEPALIVE, true)
 
       bootstrap.bind(port).sync().channel().closeFuture().sync()
     }

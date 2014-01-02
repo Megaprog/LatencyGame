@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (C) 2013 Tomas Shestakov. <https://github.com/Megaprog/LatencyGame>
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="properties">
+            <value>
+                Host=localhost
+                Port=23
+                MaxBots=2
+                CreationDelay=500
+                BotsPerStep=1
+                LogDelay=1000
+                ClientGroupThreads=1
+            </value>
+        </property>
+    </bean>
+
+    <bean id="botsProducer" class="BotsProducerActor" factory-method="create">
+        <constructor-arg ref="actorSystem"/>
+        <constructor-arg value="${MaxBots}"/>
+        <constructor-arg >
+            <bean class="scala.concurrent.duration.FiniteDuration" factory-method="apply">
+                <constructor-arg type="long" value="${CreationDelay}"/>
+                <constructor-arg type="java.util.concurrent.TimeUnit" value="MILLISECONDS"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg value="${BotsPerStep}"/>
+        <constructor-arg >
+            <bean class="scala.concurrent.duration.FiniteDuration" factory-method="apply">
+                <constructor-arg value="${LogDelay}"/>
+                <constructor-arg type="java.util.concurrent.TimeUnit" value="MILLISECONDS"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg ref="nettyClient"/>
+    </bean>
+
+    <bean id="nettyClient" class="NettyClient" factory-method="factory">
+        <constructor-arg value="${Host}"/>
+        <constructor-arg value="${Port}"/>
+        <constructor-arg>
+            <bean class="io.netty.channel.nio.NioEventLoopGroup">
+                <constructor-arg name="nThreads" type="int" value="${ClientGroupThreads}"/>
+                <constructor-arg name="executor" type="java.util.concurrent.Executor">
+                    <bean class="executors.ExecutorToRunner">
+                        <constructor-arg name="actorRefFactory" type="akka.actor.ActorRefFactory" ref="actorSystem"/>
+                        <constructor-arg name="nThreads" type="int" value="${ClientGroupThreads}"/>
+                    </bean>
+                </constructor-arg>
+            </bean>
+        </constructor-arg>
+        <constructor-arg ref="pipelineInitializer"/>
+    </bean>
+
+    <bean id="actorSystem" class="akka.actor.ActorSystem" factory-method="apply"/>
+
+    <bean id="pipelineInitializer" class="ServerPipelineInitializer" factory-method="factory">
+        <constructor-arg ref="serverHandlerFactory"/>
+    </bean>
+
+    <bean id="serverHandlerFactory" class="handlers.ServerHandler" factory-method="factory">
+    </bean>
+
+</beans>

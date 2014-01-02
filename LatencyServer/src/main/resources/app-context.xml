@@ -20,11 +20,10 @@
     </bean>
 
     <bean id="networkServer" class="NettyServer">
-        <constructor-arg name="host" type="java.net.InetAddress"><null/></constructor-arg>
         <constructor-arg name="port" type="int" value="${Port}"/>
         <constructor-arg name="parentGroup" type="io.netty.channel.EventLoopGroup" ref="parentGroup"/>
         <constructor-arg name="childGroup" type="io.netty.channel.EventLoopGroup" ref="childGroup"/>
-        <constructor-arg name="childHandler" type="io.netty.channel.ChannelHandler" ref="pipelineInitializer"/>
+        <constructor-arg name="initializer" type="io.netty.channel.ChannelHandler" ref="pipelineInitializer"/>
     </bean>
 
     <bean id="parentGroup" class="io.netty.channel.nio.NioEventLoopGroup">
@@ -49,7 +48,7 @@
 
     <bean id="actorSystem" class="akka.actor.ActorSystem" factory-method="apply"/>
 
-    <bean id="pipelineInitializer" class="TelnetPipelineInitializer">
+    <bean id="pipelineInitializer" class="ClientPipelineInitializer">
         <constructor-arg ref="clientHandlerFactory"/>
     </bean>
 

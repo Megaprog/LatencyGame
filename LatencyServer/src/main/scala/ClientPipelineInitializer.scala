@@ -14,20 +14,20 @@ import java.nio.charset.Charset
  * Date: 27.12.13
  * Time: 22:24
  */
-class TelnetPipelineInitializer(messageHandlerFactory: (SocketChannel) => ChannelHandler) extends ChannelInitializer[SocketChannel] {
+class ClientPipelineInitializer(messageHandlerFactory: (SocketChannel) => ChannelHandler) extends ChannelInitializer[SocketChannel] {
 
   def initChannel(ch: SocketChannel) {
     val pipeline: ChannelPipeline = ch.pipeline
 
-    pipeline.addLast("decoder", new CharacterDecoder(TelnetPipelineInitializer.StringCharset))
-    pipeline.addLast("encoder", TelnetPipelineInitializer.Encoder)
+    pipeline.addLast("decoder", new CharacterDecoder(ClientPipelineInitializer.StringCharset))
+    pipeline.addLast("encoder", ClientPipelineInitializer.Encoder)
 
     //Business logic
     pipeline.addLast("handler", messageHandlerFactory(ch))
   }
 }
 
-object TelnetPipelineInitializer {
+object ClientPipelineInitializer {
   val StringCharset = Charset.forName("UTF-8")
 
   //The encoder and decoder are static as these are sharable
