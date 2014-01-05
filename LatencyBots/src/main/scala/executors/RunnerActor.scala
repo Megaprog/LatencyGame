@@ -14,6 +14,12 @@ import akka.actor.Actor
 class RunnerActor extends Actor {
 
   def receive: Actor.Receive = {
-    case runnable: Runnable => runnable.run()
+    case runnable: Runnable =>
+
+      println("RunnerActor run " + runnable)
+
+      runnable.run()
+
+      println("RunnerActor finished")
   }
 }

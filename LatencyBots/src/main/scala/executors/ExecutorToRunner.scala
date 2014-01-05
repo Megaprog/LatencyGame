@@ -5,7 +5,7 @@
 package executors
 
 import java.util.concurrent.Executor
-import akka.actor.{ActorRefFactory, ActorRef}
+import akka.actor.{Props, ActorRefFactory, ActorRef}
 
 /**
  * User: Tomas
@@ -14,6 +14,7 @@ import akka.actor.{ActorRefFactory, ActorRef}
  */
 class ExecutorToRunner(val runner: ActorRef) extends Executor {
 
+  def this(actorRefFactory: ActorRefFactory) = this(actorRefFactory.actorOf(Props[RunnerActor].withDispatcher("akka.io.pinned-dispatcher")))
   def this(actorRefFactory: ActorRefFactory, nThreads: Int) = this(RunnerRouter(actorRefFactory, nThreads))
 
   def execute(command: Runnable) {

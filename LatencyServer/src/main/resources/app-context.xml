@@ -13,7 +13,6 @@
                 Port=23
                 Players=2
                 Timeout=3
-                ParentGroupThreads=1
                 ChildGroupThreads=4
             </value>
         </property>
@@ -27,11 +26,10 @@
     </bean>
 
     <bean id="parentGroup" class="io.netty.channel.nio.NioEventLoopGroup">
-        <constructor-arg name="nThreads" type="int" value="${ParentGroupThreads}"/>
+        <constructor-arg name="nThreads" type="int" value="1"/>
         <constructor-arg name="executor" type="java.util.concurrent.Executor">
             <bean class="executors.ExecutorToRunner">
                 <constructor-arg name="actorRefFactory" type="akka.actor.ActorRefFactory" ref="actorSystem"/>
-                <constructor-arg name="nThreads" type="int" value="${ParentGroupThreads}"/>
             </bean>
         </constructor-arg>
     </bean>

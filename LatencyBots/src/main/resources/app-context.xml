@@ -15,8 +15,8 @@
                 MaxBots=2
                 CreationDelay=500
                 BotsPerStep=1
-                LogDelay=1000
-                ClientGroupThreads=1
+                LogDelay=20000
+                ClientGroupThreads=8
             </value>
         </property>
     </bean>
@@ -45,16 +45,16 @@
         <constructor-arg value="${Port}"/>
         <constructor-arg>
             <bean class="io.netty.channel.nio.NioEventLoopGroup">
-                <constructor-arg name="nThreads" type="int" value="${ClientGroupThreads}"/>
-                <constructor-arg name="executor" type="java.util.concurrent.Executor">
-                    <bean class="executors.ExecutorToRunner">
-                        <constructor-arg name="actorRefFactory" type="akka.actor.ActorRefFactory" ref="actorSystem"/>
-                        <constructor-arg name="nThreads" type="int" value="${ClientGroupThreads}"/>
-                    </bean>
-                </constructor-arg>
+                <constructor-arg value="2"/>
+                <constructor-arg ref="clientExecutor"/>
             </bean>
         </constructor-arg>
         <constructor-arg ref="pipelineInitializer"/>
+    </bean>
+
+    <bean id="clientExecutor" class="executors.ExecutorToRunner">
+        <constructor-arg type="akka.actor.ActorRefFactory" ref="actorSystem"/>
+        <constructor-arg type="int" value="${ClientGroupThreads}"/>
     </bean>
 
     <bean id="actorSystem" class="akka.actor.ActorSystem" factory-method="apply"/>

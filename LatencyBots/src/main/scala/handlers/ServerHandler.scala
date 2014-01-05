@@ -8,24 +8,25 @@ import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
 import org.slf4j.LoggerFactory
 import akka.actor.ActorRef
 import io.netty.channel.socket.SocketChannel
-import messages.Disconnected
+import messages.{Connected, Disconnected}
 
 /**
  * User: Tomas
  * Date: 28.12.13
  * Time: 14:10
  */
-class ServerHandler(producerActorRef: ActorRef, channel: SocketChannel) extends SimpleChannelInboundHandler[Character] {
+class ServerHandler(producerRef: ActorRef, channel: SocketChannel) extends SimpleChannelInboundHandler[Character] {
   import ServerHandler.logger
 
   def messageReceived(ctx: ChannelHandlerContext, msg: Character) {
   }
 
   override def channelActive(ctx: ChannelHandlerContext) {
+    producerRef ! Connected
   }
 
   override def channelInactive(ctx: ChannelHandlerContext) {
-    producerActorRef ! Disconnected
+    producerRef ! Disconnected
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {

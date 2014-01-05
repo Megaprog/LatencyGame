@@ -18,7 +18,6 @@ class NettyServer(port: Int,
                   initializer: ChannelHandler) extends Server {
 
   def start() = {
-    var exitCode = 0
 
     try {
       val bootstrap = new ServerBootstrap()
@@ -28,17 +27,16 @@ class NettyServer(port: Int,
               .childOption[java.lang.Boolean](ChannelOption.SO_KEEPALIVE, true)
 
       bootstrap.bind(port).sync().channel().closeFuture().sync()
+      0
     }
     catch {
       case ex: Exception =>
         LoggerFactory.getLogger(classOf[NettyServer]).error(ex.getMessage, ex)
-        exitCode = 1
+        1
     }
     finally {
       parentGroup.shutdownGracefully().get()
       childGroup.shutdownGracefully().get()
     }
-
-    exitCode
   }
 }

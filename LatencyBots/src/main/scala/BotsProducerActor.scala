@@ -35,7 +35,8 @@ class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep
   def receive: Actor.Receive = {
     case AddBots =>
       (1 to math.min(maxBots - botsNumber, botsPerStep)) foreach { _ =>
-        botFactory(self).run()
+        logger.info("Produce")
+        new Thread(botFactory(self)).start()
         botsNumber += 1
       }
       scheduleBots()
@@ -45,9 +46,11 @@ class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep
       scheduleLog()
 
     case Connected =>
+      logger.info("Connected")
       connected +=1
 
     case Disconnected =>
+      logger.info("Disconnected")
       connected -= 1
       botsNumber -= 1
   }

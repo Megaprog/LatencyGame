@@ -8,6 +8,7 @@ import akka.actor.{Props, ActorRefFactory, ActorRef, Actor}
 import io.netty.channel.socket.SocketChannel
 import messages._
 import scala.Some
+import org.slf4j.LoggerFactory
 
 /**
  * User: Tomas
@@ -22,7 +23,9 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
       send("Привет! Попробую найти тебе противника")
       managerRef ! GameRequest
 
-    case Disconnected => context.stop(self)
+    case Disconnected =>
+      ClientActor.logger.info("Disconnected")
+      context.stop(self)
 
     case GameStart(_, _) =>
       send("Противник найден.")
@@ -70,6 +73,7 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
 }
 
 object ClientActor {
+  val logger = LoggerFactory.getLogger(classOf[ClientActor])
 
   def factory(actorRefFactory: ActorRefFactory, managerRef: ActorRef) =
     (ch: SocketChannel) => actorRefFactory.actorOf(Props(classOf[ClientActor], ch, managerRef))
