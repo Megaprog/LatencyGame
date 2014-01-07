@@ -13,13 +13,14 @@ import akka.io.TcpPipelineHandler.WithinActorContext
 import java.net.InetSocketAddress
 import messages.{BotDisconnected, BotConnected}
 import pipeline.{TelnetNegotiationCutter, LineFraming}
+import scala.util.Random
 
 /**
  * User: Tomas
  * Date: 06.01.14
  * Time: 13:06
  */
-class BotActor(host: String, port: Int, producerRef: ActorRef) extends Actor with ActorLogging {
+class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotIntellect) extends Actor with ActorLogging {
   import context.system
 
   override def preStart() {
@@ -50,11 +51,15 @@ class BotActor(host: String, port: Int, producerRef: ActorRef) extends Actor wit
       connection ! Register(pipeline)
 
       context become handling(init)
+
+      log.info(s"intellect is $intellect")
+      intellect.attach((msg: String) => pipeline ! init.Command(msg))
   }
 
   def handling(init: TcpPipelineHandler.Init[TcpPipelineHandler.WithinActorContext, String, String]): Actor.Receive = {
     case init.Event(data) =>
       log.info(s"received $data")
+      intellect.receive(data)
 
     case _: ConnectionClosed =>
       log.info(s"disc from $sender")
@@ -67,7 +72,7 @@ class BotActor(host: String, port: Int, producerRef: ActorRef) extends Actor wit
 
 object BotActor {
 
-  def factory(actorSystem: ActorRefFactory, host: String, port: Int) = (producerRef: ActorRef) =>
-    actorSystem.actorOf(Props(classOf[BotActor], host, port, producerRef))
+  def factory(actorSystem: ActorRefFactory, host: String, port: Int, intellects: java.util.List[() => BotIntellect]) = (producerRef: ActorRef) =>
+    actorSystem.actorOf(Props(classOf[BotActor], host, port, producerRef, intellects.get(Random.nextInt(intellects.size())).apply()))
 }
 

@@ -43,6 +43,13 @@
         <constructor-arg type="akka.actor.ActorRefFactory" ref="actorSystem"/>
         <constructor-arg value="${Host}"/>
         <constructor-arg value="${Port}"/>
+        <constructor-arg>
+            <list>
+                <!--<bean class="SilentIntellect" factory-method="factory"/>-->
+                <bean class="QuickIntellect" factory-method="factory"/>
+                <!--<bean class="CleverIntellect" factory-method="factory"/>-->
+            </list>
+        </constructor-arg>
     </bean>
 
     <bean id="actorSystem" class="akka.actor.ActorSystem" factory-method="apply"/>
