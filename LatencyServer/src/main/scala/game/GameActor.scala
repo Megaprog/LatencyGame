@@ -28,7 +28,7 @@ class GameActor extends Actor {
 
   def receive: Actor.Receive = {
     case gameStart @ GameStart(timeout, candidates) =>
-      logger.info(s"Game started with $candidates")
+      logger.debug(s"Game started with $candidates")
 
       gameData = Some(createGameData(sender, candidates))
       candidates foreach(_ ! gameStart)
@@ -37,7 +37,7 @@ class GameActor extends Actor {
       timeoutTask = scheduleTimeout(timeout)
 
     case spawnChar @ SpawnChar(char) =>
-      logger.info(spawnChar.toString)
+      logger.debug(spawnChar.toString)
 
       gameData foreach { data =>
         if (char == data.targetChar) {
@@ -50,7 +50,7 @@ class GameActor extends Actor {
     case GameTimeout => gameOver(None, GameOver.Reason.Timeout)
 
     case ' ' =>
-      logger.info(s"$sender --> 'space'")
+      logger.debug(s"$sender --> 'space'")
       gameData foreach { data =>
         if (data.hunterBegin) {
           gameOver(Some(sender), GameOver.Reason.Normal)

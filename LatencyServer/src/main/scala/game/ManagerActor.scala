@@ -22,7 +22,7 @@ class ManagerActor(playersInGame: Int, timeout: Int, gameActorFactory: () => Act
 
   def receive: Actor.Receive = {
     case GameRequest =>
-      logger.info(s"Game request from $sender")
+      logger.debug(s"Game request from $sender")
 
       pending = sender :: pending
       if (pending.size >= playersInGame) {
@@ -30,7 +30,7 @@ class ManagerActor(playersInGame: Int, timeout: Int, gameActorFactory: () => Act
         pending = List.empty
       }
 
-    case result: GameOver => logger.info(result.toString)
+    case result: GameOver => logger.debug(result.toString)
   }
 }
 

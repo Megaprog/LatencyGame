@@ -9,7 +9,6 @@ import akka.io.Tcp._
 import akka.io.Tcp.CommandFailed
 import akka.io.Tcp.Connect
 import akka.io.Tcp.Connected
-import akka.io.TcpPipelineHandler.WithinActorContext
 import java.net.InetSocketAddress
 import messages.{BotDisconnected, BotConnected}
 import pipeline.{TelnetNegotiationCutter, LineFraming}
@@ -29,7 +28,7 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
 
   def receive: Actor.Receive = {
     case CommandFailed(_: Connect) =>
-      log.info(s"connection failed $self")
+      log.debug(s"connection failed $self")
       context stop self
 
     case Connected(_, _) =>
@@ -46,27 +45,23 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
       val connection = sender
       val pipeline = context.actorOf(TcpPipelineHandler.props(init, connection, self))
 
-      log.info(s"TcpPipelineHandler $pipeline")
-
-      connection ! Register(pipeline)
+      connection ! Register(pipeline/*, keepOpenOnPeerClosed = true*/)
 
       context become handling(init)
 
-      log.info(s"intellect is $intellect")
+      log.debug(s"intellect is $intellect")
       intellect.attach((msg: String) => pipeline ! init.Command(msg))
   }
 
   def handling(init: TcpPipelineHandler.Init[TcpPipelineHandler.WithinActorContext, String, String]): Actor.Receive = {
     case init.Event(data) =>
-      log.info(s"received $data")
+      log.debug(s"received $data")
       intellect.receive(data)
 
     case _: ConnectionClosed =>
-      log.info(s"disc from $sender")
+      log.debug(s"disc from $sender")
       producerRef ! BotDisconnected
       context stop self
-
-    case _ => log.info(s"some message from $sender")
   }
 }
 

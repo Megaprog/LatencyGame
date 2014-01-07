@@ -12,10 +12,10 @@
             <value>
                 Host=localhost
                 Port=23
-                MaxBots=2
+                MaxBots=100000
                 CreationDelay=1000
-                BotsPerStep=1
-                LogDelay=10000
+                BotsPerStep=20000
+                LogDelay=5000
             </value>
         </property>
     </bean>
@@ -45,9 +45,9 @@
         <constructor-arg value="${Port}"/>
         <constructor-arg>
             <list>
-                <!--<bean class="SilentIntellect" factory-method="factory"/>-->
+                <bean class="SilentIntellect" factory-method="factory"/>
                 <bean class="QuickIntellect" factory-method="factory"/>
-                <!--<bean class="CleverIntellect" factory-method="factory"/>-->
+                <bean class="CleverIntellect" factory-method="factory"/>
             </list>
         </constructor-arg>
     </bean>

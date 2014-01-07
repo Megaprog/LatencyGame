@@ -13,8 +13,9 @@ import scala.concurrent.duration.FiniteDuration
  * Time: 23:00
  */
 class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep: Int, logDelay: FiniteDuration,
-                        botFactory: (ActorRef) => ActorRef) extends Actor with ActorLogging {
+                        botFactory: (ActorRef) => ActorRef) extends Actor {
   import context.{system, dispatcher}
+  import BotsProducerActor.log
 
   var botsNumber = 0
   var connected = 0
@@ -36,7 +37,7 @@ class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep
     case AddBots =>
       (1 to math.min(maxBots - botsNumber, botsPerStep)) foreach { _ =>
         val bot = botFactory(self)
-        log.info(s"produce $bot")
+        log.debug(s"produce $bot")
         context watch bot
         botsNumber += 1
       }
@@ -47,20 +48,21 @@ class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep
       scheduleLog()
 
     case BotConnected =>
-      log.info(s"connected $sender")
+      log.debug(s"connected $sender")
       connected +=1
 
     case BotDisconnected =>
-      log.info(s"disconnected $sender")
+      log.debug(s"disconnected $sender")
       connected -= 1
 
     case Terminated(bot) =>
-      log.info(s"stopped $bot")
+      log.debug(s"stopped $bot")
       botsNumber -= 1
   }
 }
 
 object BotsProducerActor {
+  val log = LoggerFactory.getLogger(classOf[BotsProducerActor])
 
   def create(actorSystem: ActorRefFactory, maxBots: Int, creationDelay: FiniteDuration, botsPerStep: Int, logDelay: FiniteDuration, botFactory: (ActorRef) => ActorRef) =
     actorSystem.actorOf(Props(classOf[BotsProducerActor], maxBots, creationDelay, botsPerStep, logDelay, botFactory).withDispatcher("akka.io.pinned-dispatcher"))
