@@ -13,10 +13,9 @@
                 Host=localhost
                 Port=23
                 MaxBots=2
-                CreationDelay=500
+                CreationDelay=1000
                 BotsPerStep=1
-                LogDelay=20000
-                ClientGroupThreads=8
+                LogDelay=10000
             </value>
         </property>
     </bean>
@@ -37,33 +36,15 @@
                 <constructor-arg type="java.util.concurrent.TimeUnit" value="MILLISECONDS"/>
             </bean>
         </constructor-arg>
-        <constructor-arg ref="nettyClient"/>
+        <constructor-arg ref="botFactory"/>
     </bean>
 
-    <bean id="nettyClient" class="NettyClient" factory-method="factory">
+    <bean id="botFactory" class="BotActor" factory-method="factory">
+        <constructor-arg type="akka.actor.ActorRefFactory" ref="actorSystem"/>
         <constructor-arg value="${Host}"/>
         <constructor-arg value="${Port}"/>
-        <constructor-arg>
-            <bean class="io.netty.channel.nio.NioEventLoopGroup">
-                <constructor-arg value="2"/>
-                <constructor-arg ref="clientExecutor"/>
-            </bean>
-        </constructor-arg>
-        <constructor-arg ref="pipelineInitializer"/>
-    </bean>
-
-    <bean id="clientExecutor" class="executors.ExecutorToRunner">
-        <constructor-arg type="akka.actor.ActorRefFactory" ref="actorSystem"/>
-        <constructor-arg type="int" value="${ClientGroupThreads}"/>
     </bean>
 
     <bean id="actorSystem" class="akka.actor.ActorSystem" factory-method="apply"/>
-
-    <bean id="pipelineInitializer" class="ServerPipelineInitializer" factory-method="factory">
-        <constructor-arg ref="serverHandlerFactory"/>
-    </bean>
-
-    <bean id="serverHandlerFactory" class="handlers.ServerHandler" factory-method="factory">
-    </bean>
 
 </beans>

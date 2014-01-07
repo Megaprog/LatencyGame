@@ -2,8 +2,8 @@
  * Copyright (C) 2014 Tomas Shestakov. <https://github.com/Megaprog/LatencyGame>
  */
 
-import akka.actor.{ActorRef, Props, ActorRefFactory, Actor}
-import messages.{Connected, Disconnected, AddBots, LogBots}
+import akka.actor._
+import messages.{BotConnected, BotDisconnected, AddBots, LogBots}
 import org.slf4j.LoggerFactory
 import scala.concurrent.duration.FiniteDuration
 
@@ -12,9 +12,9 @@ import scala.concurrent.duration.FiniteDuration
  * Date: 01.01.14
  * Time: 23:00
  */
-class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep: Int, logDelay: FiniteDuration, botFactory: (ActorRef) => Runnable) extends Actor {
-  import BotsProducerActor.logger
-  import context._
+class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep: Int, logDelay: FiniteDuration,
+                        botFactory: (ActorRef) => ActorRef) extends Actor with ActorLogging {
+  import context.{system, dispatcher}
 
   var botsNumber = 0
   var connected = 0
@@ -35,30 +35,33 @@ class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep
   def receive: Actor.Receive = {
     case AddBots =>
       (1 to math.min(maxBots - botsNumber, botsPerStep)) foreach { _ =>
-        logger.info("Produce")
-        new Thread(botFactory(self)).start()
+        val bot = botFactory(self)
+        log.info(s"produce $bot")
+        context watch bot
         botsNumber += 1
       }
       scheduleBots()
 
     case LogBots =>
-      logger.info("The number of bots is {} connected {}", botsNumber, connected)
+      log.info("The number of bots is {} connected {}", botsNumber, connected)
       scheduleLog()
 
-    case Connected =>
-      logger.info("Connected")
+    case BotConnected =>
+      log.info(s"connected $sender")
       connected +=1
 
-    case Disconnected =>
-      logger.info("Disconnected")
+    case BotDisconnected =>
+      log.info(s"disconnected $sender")
       connected -= 1
+
+    case Terminated(bot) =>
+      log.info(s"stopped $bot")
       botsNumber -= 1
   }
 }
 
 object BotsProducerActor {
-  val logger = LoggerFactory.getLogger(classOf[BotsProducerActor])
 
-  def create(actorSystem: ActorRefFactory, maxBots: Int, creationDelay: FiniteDuration, botsPerStep: Int, logDelay: FiniteDuration, botFactory: (ActorRef) => Runnable) =
+  def create(actorSystem: ActorRefFactory, maxBots: Int, creationDelay: FiniteDuration, botsPerStep: Int, logDelay: FiniteDuration, botFactory: (ActorRef) => ActorRef) =
     actorSystem.actorOf(Props(classOf[BotsProducerActor], maxBots, creationDelay, botsPerStep, logDelay, botFactory).withDispatcher("akka.io.pinned-dispatcher"))
 }

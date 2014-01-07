@@ -9,4 +9,4 @@ package messages
  * Date: 29.12.13
  * Time: 16:03
  */
-case object Connected
+case object BotDisconnected

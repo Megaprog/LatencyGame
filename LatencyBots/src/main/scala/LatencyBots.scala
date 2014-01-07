@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Tomas Shestakov. <https://github.com/Megaprog/LatencyGame>
+ * Copyright (C) 2014 Tomas Shestakov. <https://github.com/Megaprog/LatencyGame>
  */
 
 import akka.actor.ActorRef
