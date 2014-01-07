@@ -14,7 +14,7 @@ import scala.concurrent.duration.FiniteDuration
  */
 class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep: Int, logDelay: FiniteDuration,
                         botFactory: (ActorRef) => ActorRef) extends Actor {
-  import context.{system, dispatcher}
+  import context.dispatcher
   import BotsProducerActor.log
 
   var botsNumber = 0
@@ -26,11 +26,11 @@ class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep
   }
 
   def scheduleBots() {
-    system.scheduler.scheduleOnce(creationDelay, self, AddBots)
+    context.system.scheduler.scheduleOnce(creationDelay, self, AddBots)
   }
 
   def scheduleLog() {
-    system.scheduler.scheduleOnce(logDelay, self, LogBots)
+    context.system.scheduler.scheduleOnce(logDelay, self, LogBots)
   }
 
   def receive: Actor.Receive = {

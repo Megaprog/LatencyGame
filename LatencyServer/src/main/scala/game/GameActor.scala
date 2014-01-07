@@ -107,5 +107,5 @@ object GameActor {
     def cancel(): Boolean = false
   }
 
-  def factory(actorRefFactory: ActorRefFactory) = () => actorRefFactory.actorOf(Props[GameActor])
+  def factory = (actorRefFactory: ActorRefFactory) => actorRefFactory.actorOf(Props[GameActor])
 }

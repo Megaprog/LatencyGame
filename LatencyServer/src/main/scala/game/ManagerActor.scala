@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
  * Date: 29.12.13
  * Time: 12:21
  */
-class ManagerActor(playersInGame: Int, timeout: Int, gameActorFactory: () => ActorRef) extends Actor {
+class ManagerActor(playersInGame: Int, timeout: Int, gameFactory: (ActorRefFactory) => ActorRef) extends Actor {
   import ManagerActor.logger
   
   var pending = List.empty[ActorRef]
@@ -26,7 +26,7 @@ class ManagerActor(playersInGame: Int, timeout: Int, gameActorFactory: () => Act
 
       pending = sender :: pending
       if (pending.size >= playersInGame) {
-        gameActorFactory() ! GameStart(FiniteDuration(timeout, TimeUnit.MINUTES), pending)
+        gameFactory(context) ! GameStart(FiniteDuration(timeout, TimeUnit.MINUTES), pending)
         pending = List.empty
       }
 
@@ -37,6 +37,6 @@ class ManagerActor(playersInGame: Int, timeout: Int, gameActorFactory: () => Act
 object ManagerActor {
   val logger = LoggerFactory.getLogger(classOf[ManagerActor])
 
-  def create(actorRefFactory: ActorRefFactory, playersInGame: Int, timeout: Int, gameActorFactory: () => ActorRef) =
+  def create(actorRefFactory: ActorRefFactory, playersInGame: Int, timeout: Int, gameActorFactory: (ActorRefFactory) => ActorRef) =
     actorRefFactory.actorOf(Props(classOf[ManagerActor], playersInGame, timeout, gameActorFactory).withDispatcher("akka.io.pinned-dispatcher"))
 }

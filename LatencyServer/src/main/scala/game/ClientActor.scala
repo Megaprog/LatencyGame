@@ -4,33 +4,41 @@
 
 package game
 
-import akka.actor.{Props, ActorRefFactory, ActorRef, Actor}
-import io.netty.channel.socket.SocketChannel
+import akka.actor._
 import messages._
 import scala.Some
 import org.slf4j.LoggerFactory
+import akka.io.TcpPipelineHandler.{Init, WithinActorContext}
+import akka.io.Tcp.{Close, ConnectionClosed, Connected}
+import messages.GameStart
+import messages.SpawnChar
+import scala.Some
 
 /**
  * User: Tomas
  * Date: 29.12.13
  * Time: 12:59
  */
-class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
-  var gameRef = Option.empty[ActorRef]
+class ClientActor(init: Init[WithinActorContext, String, String], managerRef: ActorRef) extends Actor with ActorLogging {
+  var connection: ActorRef =_
+  var pipeline: ActorRef = _
+  var gameRefOption = Option.empty[ActorRef]
 
   def receive: Actor.Receive = {
-    case Connected =>
+    case ConnectionInfo(_, _, conn, pipes) =>
+      connection = conn
+      pipeline = pipes
       send("Привет! Попробую найти тебе противника")
       managerRef ! GameRequest
 
-    case Disconnected =>
-      ClientActor.logger.debug("Disconnected")
-      context.stop(self)
+    case _: ConnectionClosed =>
+      log.debug("Disconnected")
+      context stop self
 
     case GameStart(_, _) =>
       send("Противник найден.")
       send("Нажмите пробел, когда увидите цифру 3")
-      gameRef = Some(sender)
+      gameRefOption = Some(sender)
 
     case GameOver(_, winners, reason) =>
       if (winners.exists(_ == self)) {
@@ -53,28 +61,27 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
         }
       }
 
-      gameRef = None
+      gameRefOption = None
       disconnect()
 
     case SpawnChar(char) => send(char.toString)
 
-    case input: Character =>
+    case init.Event(input) =>
       send("")
-      gameRef foreach(_ ! input)
+      gameRefOption foreach(_ ! input)
   }
 
   def send(string: String) {
-    channel.writeAndFlush(string + System.lineSeparator())
+    pipeline ! init.Command(string + System.lineSeparator())
   }
 
   def disconnect() {
-    channel.close()
+    connection ! Close
   }
 }
 
 object ClientActor {
-  val logger = LoggerFactory.getLogger(classOf[ClientActor])
 
-  def factory(actorRefFactory: ActorRefFactory, managerRef: ActorRef) =
-    (ch: SocketChannel) => actorRefFactory.actorOf(Props(classOf[ClientActor], ch, managerRef))
+  def factory(managerRef: ActorRef) = (actorRefFactory: ActorRefFactory, init: Init[WithinActorContext, String, String]) =>
+    actorRefFactory.actorOf(Props(classOf[ClientActor], init, managerRef))
 }

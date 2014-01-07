@@ -10,6 +10,7 @@ import akka.io.Tcp.CommandFailed
 import akka.io.Tcp.Connect
 import akka.io.Tcp.Connected
 import java.net.InetSocketAddress
+import akka.io.TcpPipelineHandler.{Init, WithinActorContext}
 import messages.{BotDisconnected, BotConnected}
 import pipeline.{TelnetNegotiationCutter, LineFraming}
 import scala.util.Random
@@ -53,7 +54,7 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
       intellect.attach((msg: String) => pipeline ! init.Command(msg))
   }
 
-  def handling(init: TcpPipelineHandler.Init[TcpPipelineHandler.WithinActorContext, String, String]): Actor.Receive = {
+  def handling(init: Init[WithinActorContext, String, String]): Actor.Receive = {
     case init.Event(data) =>
       log.debug(s"received $data")
       intellect.receive(data)

@@ -2,6 +2,7 @@
  * Copyright (C) 2013 Tomas Shestakov. <https://github.com/Megaprog/LatencyGame>
  */
 
+import akka.actor.{ActorRef, ActorSystem}
 import org.springframework.context.ApplicationContext
 import org.springframework.context.support.{ClassPathXmlApplicationContext, FileSystemXmlApplicationContext}
 
@@ -17,5 +18,7 @@ object LatencyGame extends App {
     if (args.length > 0) new FileSystemXmlApplicationContext(args(0)) 
     else new ClassPathXmlApplicationContext(DefaultContextName)
 
-  System.exit(context.getBean(classOf[Server]).start())
+  context.getBean(classOf[ActorSystem]).registerOnTermination({System.exit(1)})
+
+  context.getBean("networkServer", classOf[ActorRef])
 }
