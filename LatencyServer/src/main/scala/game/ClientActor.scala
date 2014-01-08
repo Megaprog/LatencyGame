@@ -64,6 +64,7 @@ class ClientActor(init: Init[WithinActorContext, String, String], managerRef: Ac
     case SpawnChar(char) => send(char.toString)
 
     case init.Event(input) =>
+      pipeline = sender //input can be received early than Connected event
       send("")
       gameRefOption foreach(gameRef => input.foreach(gameRef ! _))
   }
