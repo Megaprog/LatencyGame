@@ -13,7 +13,7 @@
                 Port=23
                 Players=2
                 Timeout=3
-                ChildGroupThreads=4
+                LogDelay=5
             </value>
         </property>
     </bean>
@@ -34,6 +34,12 @@
         <constructor-arg ref="actorSystem"/>
         <constructor-arg value="${Players}"/>
         <constructor-arg value="${Timeout}"/>
+        <constructor-arg >
+            <bean class="scala.concurrent.duration.FiniteDuration" factory-method="apply">
+                <constructor-arg value="${LogDelay}"/>
+                <constructor-arg type="java.util.concurrent.TimeUnit" value="SECONDS"/>
+            </bean>
+        </constructor-arg>
         <constructor-arg ref="gameActorFactory"/>
     </bean>
 

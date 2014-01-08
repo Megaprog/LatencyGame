@@ -45,6 +45,9 @@ class ClientActor(init: Init[WithinActorContext, String, String], managerRef: Ac
         else if (reason == GameOver.Reason.FalseStart) {
           send("Ваш противник поспешил и вы выиграли")
         }
+        else if (reason == GameOver.Reason.Disconnect) {
+          send("Ваш противник вышел из игры и вы выиграли")
+        }
       }
       else {
         if (reason == GameOver.Reason.Normal) {

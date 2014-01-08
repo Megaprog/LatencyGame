@@ -5,13 +5,15 @@
 package game
 
 import akka.actor._
-import messages.{GameOver, GameTimeout}
+import messages._
 import org.slf4j.LoggerFactory
 import scala.util.Random
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
 import scala.Some
+import scala.Some
 import messages.GameStart
+import akka.actor.Terminated
 import messages.SpawnChar
 
 /**
@@ -19,25 +21,25 @@ import messages.SpawnChar
  * Date: 29.12.13
  * Time: 12:27
  */
-class GameActor extends Actor {
-  import GameActor._
+class GameActor extends Actor with ActorLogging{
   import context._
 
   var gameData = Option.empty[GameData]
-  var timeoutTask = emptyCancellable
+  var timeoutTask = GameActor.emptyCancellable
 
   def receive: Actor.Receive = {
     case gameStart @ GameStart(timeout, candidates) =>
-      logger.debug(s"Game started with $candidates")
+      log.debug(s"Game started with $candidates")
 
       gameData = Some(createGameData(sender, candidates))
+      candidates foreach(context watch)
       candidates foreach(_ ! gameStart)
 
       scheduleChar()
       timeoutTask = scheduleTimeout(timeout)
 
     case spawnChar @ SpawnChar(char) =>
-      logger.debug(spawnChar.toString)
+      log.debug(spawnChar.toString)
 
       gameData foreach { data =>
         if (char == data.targetChar) {
@@ -49,8 +51,16 @@ class GameActor extends Actor {
 
     case GameTimeout => gameOver(None, GameOver.Reason.Timeout)
 
+    case Terminated(disconnected) =>
+      gameData foreach { data =>
+        import data._
+        log.info(s"$disconnected disconnected abnormally")
+        manager ! Disconnect(disconnected)
+        gameOver(players.filter(_ != disconnected), GameOver.Reason.Disconnect)
+      }
+
     case ' ' =>
-      logger.debug(s"$sender --> 'space'")
+      log.debug(s"$sender --> 'space'")
       gameData foreach { data =>
         if (data.hunterBegin) {
           gameOver(Some(sender), GameOver.Reason.Normal)
@@ -88,9 +98,11 @@ class GameActor extends Actor {
 
   def gameOver(winners: Traversable[ActorRef], reason: GameOver.Reason.Value) {
     gameData foreach { data =>
-      val result = GameOver(data.players, winners, reason)
-      data.players foreach(_ ! result)
-      data.manager ! result
+      import data._
+      val result = GameOver(players, winners, reason)
+      players foreach(context unwatch)
+      players foreach(_ ! result)
+      manager ! result
     }
 
     gameData = None
