@@ -13,6 +13,7 @@
                 Port=23
                 Players=2
                 Timeout=3
+                LogDelay=5
                 ChildGroupThreads=4
             </value>
         </property>
@@ -36,12 +37,12 @@
 
     <bean id="childGroup" class="io.netty.channel.nio.NioEventLoopGroup">
         <constructor-arg name="nThreads" type="int" value="${ChildGroupThreads}"/>
-        <constructor-arg name="executor" type="java.util.concurrent.Executor">
-            <bean class="executors.ExecutorToRunner">
-                <constructor-arg name="actorRefFactory" type="akka.actor.ActorRefFactory" ref="actorSystem"/>
-                <constructor-arg name="nThreads" type="int" value="${ChildGroupThreads}"/>
-            </bean>
-        </constructor-arg>
+        <!--<constructor-arg name="executor" type="java.util.concurrent.Executor">-->
+            <!--<bean class="executors.ExecutorToRunner">-->
+                <!--<constructor-arg name="actorRefFactory" type="akka.actor.ActorRefFactory" ref="actorSystem"/>-->
+                <!--<constructor-arg name="nThreads" type="int" value="${ChildGroupThreads}"/>-->
+            <!--</bean>-->
+        <!--</constructor-arg>-->
     </bean>
 
     <bean id="actorSystem" class="akka.actor.ActorSystem" factory-method="apply"/>
@@ -62,7 +63,18 @@
     <bean id="managerActor" class="game.ManagerActor" factory-method="create">
         <constructor-arg ref="actorSystem"/>
         <constructor-arg value="${Players}"/>
-        <constructor-arg value="${Timeout}"/>
+        <constructor-arg >
+            <bean class="scala.concurrent.duration.FiniteDuration" factory-method="apply">
+                <constructor-arg value="${Timeout}"/>
+                <constructor-arg type="java.util.concurrent.TimeUnit" value="MINUTES"/>
+            </bean>
+        </constructor-arg>
+        <constructor-arg >
+            <bean class="scala.concurrent.duration.FiniteDuration" factory-method="apply">
+                <constructor-arg value="${LogDelay}"/>
+                <constructor-arg type="java.util.concurrent.TimeUnit" value="SECONDS"/>
+            </bean>
+        </constructor-arg>
         <constructor-arg ref="gameActorFactory"/>
     </bean>
 

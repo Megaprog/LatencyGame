@@ -24,7 +24,8 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
       managerRef ! GameRequest
 
     case Disconnected =>
-      ClientActor.logger.debug("Disconnected")
+      ClientActor.logger.info("Disconnected")
+      gameRef foreach(_ ! Disconnected)
       context.stop(self)
 
     case GameStart(_, _) =>

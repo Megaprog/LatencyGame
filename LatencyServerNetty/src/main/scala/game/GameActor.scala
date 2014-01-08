@@ -5,11 +5,12 @@
 package game
 
 import akka.actor._
-import messages.{GameOver, GameTimeout}
+import messages._
 import org.slf4j.LoggerFactory
 import scala.util.Random
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
+import scala.Some
 import scala.Some
 import messages.GameStart
 import messages.SpawnChar
@@ -48,6 +49,13 @@ class GameActor extends Actor {
       scheduleChar()
 
     case GameTimeout => gameOver(None, GameOver.Reason.Timeout)
+
+    case Disconnected =>
+      gameData foreach { data =>
+        import data._
+        logger.info(s"$sender disconnected abnormally")
+        manager ! Disconnect(sender)
+      }
 
     case ' ' =>
       logger.debug(s"$sender --> 'space'")
