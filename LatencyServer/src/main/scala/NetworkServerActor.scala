@@ -9,8 +9,7 @@ import akka.io.Tcp._
 import akka.io.Tcp.CommandFailed
 import akka.io.Tcp.Connected
 import java.net.InetSocketAddress
-import messages.ConnectionInfo
-import pipeline.{TelnetNegotiationCutter, LineFraming}
+import pipeline.{ClosablePipelineHandler, TelnetNegotiationCutter, LineFraming}
 import akka.io.TcpPipelineHandler.{Init, WithinActorContext}
 
 /**
@@ -34,10 +33,9 @@ class NetworkServerActor(port: Int, clientFactory: (ActorRefFactory, Init[Within
   }
 
   def bound(): Actor.Receive = {
-    case Connected(remote, local) =>
+    case connected @ Connected(remote, local) =>
       val init = TcpPipelineHandler.withLogger(log,
         new StringByteStringAdapter("utf-8") >>
-        new LineFraming(512) >>
         new TelnetNegotiationCutter >>
         new TcpReadWriteAdapter >>
         new BackpressureBuffer(lowBytes = 100, highBytes = 1000, maxBytes = 1000000)
@@ -45,10 +43,10 @@ class NetworkServerActor(port: Int, clientFactory: (ActorRefFactory, Init[Within
 
       val connection = sender
       val client = clientFactory(context, init)
-      val pipeline = context.actorOf(TcpPipelineHandler.props(init, connection, client))
+      val pipeline = context.actorOf(Props(classOf[ClosablePipelineHandler[_, _, _]], init, connection, client))
 
-      connection ! Register(pipeline/*, keepOpenOnPeerClosed = true*/)
-      client ! ConnectionInfo(remote, local, connection, pipeline)
+      connection ! Register(pipeline)
+      pipeline ! connected //to inform client about connection
   }
 }
 

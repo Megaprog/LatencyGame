@@ -95,7 +95,7 @@ class GameActor extends Actor {
 
     gameData = None
     timeoutTask.cancel()
-    context.stop(self)
+    context stop self
   }
 }
 

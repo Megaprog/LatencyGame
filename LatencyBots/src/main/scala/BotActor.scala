@@ -46,7 +46,7 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
       val connection = sender
       val pipeline = context.actorOf(TcpPipelineHandler.props(init, connection, self))
 
-      connection ! Register(pipeline/*, keepOpenOnPeerClosed = true*/)
+      connection ! Register(pipeline)
 
       context become handling(init)
 

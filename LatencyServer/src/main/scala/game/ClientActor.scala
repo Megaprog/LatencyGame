@@ -6,10 +6,8 @@ package game
 
 import akka.actor._
 import messages._
-import scala.Some
-import org.slf4j.LoggerFactory
 import akka.io.TcpPipelineHandler.{Init, WithinActorContext}
-import akka.io.Tcp.{Close, ConnectionClosed, Connected}
+import akka.io.Tcp.{Close, Connected}
 import messages.GameStart
 import messages.SpawnChar
 import scala.Some
@@ -20,18 +18,17 @@ import scala.Some
  * Time: 12:59
  */
 class ClientActor(init: Init[WithinActorContext, String, String], managerRef: ActorRef) extends Actor with ActorLogging {
-  var connection: ActorRef =_
   var pipeline: ActorRef = _
   var gameRefOption = Option.empty[ActorRef]
 
   def receive: Actor.Receive = {
-    case ConnectionInfo(_, _, conn, pipes) =>
-      connection = conn
-      pipeline = pipes
+    case Connected(_, _) =>
+      pipeline = sender
+      context watch pipeline
       send("Привет! Попробую найти тебе противника")
       managerRef ! GameRequest
 
-    case _: ConnectionClosed =>
+    case Terminated(some) if some == pipeline =>
       log.debug("Disconnected")
       context stop self
 
@@ -68,7 +65,7 @@ class ClientActor(init: Init[WithinActorContext, String, String], managerRef: Ac
 
     case init.Event(input) =>
       send("")
-      gameRefOption foreach(_ ! input)
+      gameRefOption foreach(gameRef => input.foreach(gameRef ! _))
   }
 
   def send(string: String) {
@@ -76,7 +73,7 @@ class ClientActor(init: Init[WithinActorContext, String, String], managerRef: Ac
   }
 
   def disconnect() {
-    connection ! Close
+    pipeline ! Close
   }
 }
 
