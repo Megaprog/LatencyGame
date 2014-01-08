@@ -16,7 +16,7 @@ import messages.GameStart
  * Date: 29.12.13
  * Time: 12:21
  */
-class ManagerActor(playersInGame: Int, timeout: Int, logDelay: FiniteDuration, gameFactory: (ActorRefFactory) => ActorRef) extends Actor {
+class ManagerActor(playersInGame: Int, timeout: FiniteDuration, logDelay: FiniteDuration, gameFactory: (ActorRefFactory) => ActorRef) extends Actor {
   import context.dispatcher
   import ManagerActor.logger
   
@@ -40,7 +40,7 @@ class ManagerActor(playersInGame: Int, timeout: Int, logDelay: FiniteDuration, g
 
       pending = sender :: pending
       if (pending.size >= playersInGame) {
-        gameFactory(context) ! GameStart(FiniteDuration(timeout, TimeUnit.MINUTES), pending)
+        gameFactory(context) ! GameStart(timeout, pending)
         pending = List.empty
         startedGames += 1
         playingGames += 1
@@ -58,7 +58,7 @@ class ManagerActor(playersInGame: Int, timeout: Int, logDelay: FiniteDuration, g
       val currentTime = System.currentTimeMillis()
       val period = TimeUnit.MILLISECONDS.toSeconds(currentTime - lastLogTime)
 
-      logger.info(s"total $totalGames games and $disconnects disconnects, playing now $playingGames games, " +
+      logger.info(s"total played $totalGames games and $disconnects disconnects, playing now $playingGames games, " +
         s"started ${startedGames/period} finished ${finishedGames/period} games per second")
 
       startedGames = 0
@@ -76,6 +76,6 @@ class ManagerActor(playersInGame: Int, timeout: Int, logDelay: FiniteDuration, g
 object ManagerActor {
   val logger = LoggerFactory.getLogger(classOf[ManagerActor])
 
-  def create(actorRefFactory: ActorRefFactory, playersInGame: Int, timeout: Int, logDelay: FiniteDuration, gameActorFactory: (ActorRefFactory) => ActorRef) =
+  def create(actorRefFactory: ActorRefFactory, playersInGame: Int, timeout: FiniteDuration, logDelay: FiniteDuration, gameActorFactory: (ActorRefFactory) => ActorRef) =
     actorRefFactory.actorOf(Props(classOf[ManagerActor], playersInGame, timeout, logDelay, gameActorFactory).withDispatcher("akka.io.pinned-dispatcher"))
 }

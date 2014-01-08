@@ -8,6 +8,7 @@ import akka.io.IO
 import akka.io.Tcp._
 import akka.io.Tcp.CommandFailed
 import akka.io.Tcp.Connected
+import akka.io.Tcp.SO.{TcpNoDelay, KeepAlive}
 import java.net.InetSocketAddress
 import pipeline.{ClosablePipelineHandler, TelnetNegotiationCutter, LineFraming}
 import akka.io.TcpPipelineHandler.{Init, WithinActorContext}
@@ -21,7 +22,7 @@ class NetworkServerActor(port: Int, clientFactory: (ActorRefFactory, Init[Within
   import context.system
 
   override def preStart() {
-    IO(Tcp) ! Bind(self, new InetSocketAddress(port))
+    IO(Tcp) ! Bind(self, new InetSocketAddress(port)/*, options = List(KeepAlive(on = true))*/)
   }
 
   def receive: Actor.Receive = {

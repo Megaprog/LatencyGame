@@ -9,6 +9,9 @@ import akka.io.Tcp._
 import akka.io.Tcp.CommandFailed
 import akka.io.Tcp.Connect
 import akka.io.Tcp.Connected
+import akka.io.Tcp.Register
+import akka.io.Tcp.SO.KeepAlive
+import akka.io.Tcp.SO.TcpNoDelay
 import java.net.InetSocketAddress
 import akka.io.TcpPipelineHandler.{Init, WithinActorContext}
 import messages.{BotDisconnected, BotConnected}
@@ -24,7 +27,7 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
   import context.system
 
   override def preStart() {
-    IO(Tcp) ! Connect(new InetSocketAddress(host, port))
+    IO(Tcp) ! Connect(new InetSocketAddress(host, port)/*, options = List(KeepAlive(on = true))*/ /*, timeout = Some(FiniteDuration(3, TimeUnit.SECONDS))*/)
   }
 
   def receive: Actor.Receive = {

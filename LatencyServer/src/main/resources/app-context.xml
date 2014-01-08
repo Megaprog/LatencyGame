@@ -12,7 +12,7 @@
             <value>
                 Port=23
                 Players=2
-                Timeout=3
+                Timeout=1
                 LogDelay=5
             </value>
         </property>
@@ -33,7 +33,12 @@
     <bean id="managerActor" class="game.ManagerActor" factory-method="create">
         <constructor-arg ref="actorSystem"/>
         <constructor-arg value="${Players}"/>
-        <constructor-arg value="${Timeout}"/>
+        <constructor-arg >
+            <bean class="scala.concurrent.duration.FiniteDuration" factory-method="apply">
+                <constructor-arg value="${Timeout}"/>
+                <constructor-arg type="java.util.concurrent.TimeUnit" value="MINUTES"/>
+            </bean>
+        </constructor-arg>
         <constructor-arg >
             <bean class="scala.concurrent.duration.FiniteDuration" factory-method="apply">
                 <constructor-arg value="${LogDelay}"/>
