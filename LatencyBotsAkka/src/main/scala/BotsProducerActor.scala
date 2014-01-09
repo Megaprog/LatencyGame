@@ -52,7 +52,7 @@ class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep
       connected +=1
 
     case BotDisconnected =>
-      log.debug("disconnected []", sender)
+      log.debug("disconnected {}", sender)
       connected -= 1
 
     case Terminated(bot) =>
