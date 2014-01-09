@@ -24,7 +24,7 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
       managerRef ! GameRequest
 
     case Disconnected =>
-      ClientActor.logger.info("Disconnected")
+      ClientActor.logger.debug("Disconnected")
       gameRef foreach(_ ! Disconnected)
       context.stop(self)
 
@@ -40,6 +40,9 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
         }
         else if (reason == GameOver.Reason.FalseStart) {
           send("Ваш противник поспешил и вы выиграли")
+        }
+        else if (reason == GameOver.Reason.Disconnect) {
+          send("Ваш противник вышел из игры и вы выиграли")
         }
       }
       else {

@@ -36,9 +36,11 @@ object SilentIntellect {
 
 class QuickIntellect extends BotIntellect {
 
-  def receive(data: String) {}
+  var writerOption = Option.empty[Writer]
 
-  def attach(writer: Writer) { writer(WinningString)}
+  def receive(data: String) {writerOption foreach (_(WinningString))}
+
+  def attach(writer: Writer) { writerOption = Some(writer) }
 }
 object QuickIntellect {
 

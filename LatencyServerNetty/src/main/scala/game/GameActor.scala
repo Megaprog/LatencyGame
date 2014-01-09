@@ -55,6 +55,7 @@ class GameActor extends Actor {
         import data._
         logger.info(s"$sender disconnected abnormally")
         manager ! Disconnect(sender)
+        gameOver(players.filter(_ != sender), GameOver.Reason.Disconnect)
       }
 
     case ' ' =>
