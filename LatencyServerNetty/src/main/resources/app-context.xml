@@ -12,7 +12,7 @@
             <value>
                 Port=23
                 Players=2
-                Timeout=1
+                Timeout=3
                 LogDelay=5
                 ChildGroupThreads=4
             </value>

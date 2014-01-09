@@ -32,7 +32,7 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
 
   def receive: Actor.Receive = {
     case CommandFailed(_: Connect) =>
-      log.info("connection failed {}", self)
+      log.debug("connection failed {}", self)
       context stop self
 
     case Connected(_, _) =>

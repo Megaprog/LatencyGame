@@ -31,7 +31,7 @@ class ClientHandler(clientActorRef: ActorRef) extends SimpleChannelInboundHandle
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-    logger.warn(s"Unexpected exception from downstream: ${cause.getMessage}")
+    logger.debug(s"Unexpected exception from downstream: ${cause.getMessage}")
     ctx.close()
   }
 }
