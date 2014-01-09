@@ -7,7 +7,7 @@ package game
 import akka.actor._
 import messages._
 import akka.io.TcpPipelineHandler.{Init, WithinActorContext}
-import akka.io.Tcp.{Close, Connected}
+import akka.io.Tcp.{CloseCommand, Close, Connected}
 import messages.GameStart
 import messages.SpawnChar
 import scala.Some
@@ -27,6 +27,8 @@ class ClientActor(init: Init[WithinActorContext, String, String], managerRef: Ac
       context watch pipeline
       send("Привет! Попробую найти тебе противника")
       managerRef ! GameRequest
+
+    case closed: CloseCommand => log.info(closed.toString)
 
     case Terminated(some) if some == pipeline =>
       log.debug("Disconnected")

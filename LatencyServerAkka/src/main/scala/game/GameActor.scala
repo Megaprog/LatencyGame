@@ -32,7 +32,7 @@ class GameActor extends Actor with ActorLogging{
       log.debug("Game started with {}", candidates)
 
       gameData = Some(createGameData(sender, candidates))
-      candidates foreach(context watch)
+      candidates foreach context.watch
       candidates foreach(_ ! gameStart)
 
       scheduleChar()
@@ -100,7 +100,7 @@ class GameActor extends Actor with ActorLogging{
     gameData foreach { data =>
       import data._
       val result = GameOver(players, winners, reason)
-      players foreach(context unwatch)
+      players foreach context.unwatch
       players foreach(_ ! result)
       manager ! result
     }

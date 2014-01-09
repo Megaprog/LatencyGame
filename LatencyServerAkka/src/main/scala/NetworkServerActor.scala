@@ -35,19 +35,21 @@ class NetworkServerActor(port: Int, clientFactory: (ActorRefFactory, Init[Within
 
   def bound(): Actor.Receive = {
     case connected @ Connected(remote, local) =>
-      val init = TcpPipelineHandler.withLogger(log,
-        new StringByteStringAdapter("utf-8") >>
-        new TelnetNegotiationCutter >>
-        new TcpReadWriteAdapter >>
-        new BackpressureBuffer(lowBytes = 100, highBytes = 1000, maxBytes = 1000000)
-      )
+//      val init = TcpPipelineHandler.withLogger(log,
+//        new StringByteStringAdapter("utf-8") >>
+//        new TelnetNegotiationCutter >>
+//        new TcpReadWriteAdapter >>
+//        new BackpressureBuffer(lowBytes = 100, highBytes = 1000, maxBytes = 1000000)
+//      )
+//
+//      val connection = sender
+//      val client = clientFactory(context, init)
+//      val pipeline = context.actorOf(Props(classOf[ClosablePipelineHandler[_, _, _]], init, connection, client))
+//
+//      connection ! Register(pipeline)
+//      pipeline ! connected //to inform client about connection
 
-      val connection = sender
-      val client = clientFactory(context, init)
-      val pipeline = context.actorOf(Props(classOf[ClosablePipelineHandler[_, _, _]], init, connection, client))
-
-      connection ! Register(pipeline)
-      pipeline ! connected //to inform client about connection
+      //sender ! Register(context.actorOf(Props[DummyHandler]))
   }
 }
 
@@ -57,3 +59,9 @@ object NetworkServerActor {
     actorSystem.actorOf(Props(classOf[NetworkServerActor], port, clientFactory).withDispatcher("akka.io.pinned-dispatcher"))
 }
 
+class DummyHandler extends Actor {
+
+  def receive: Actor.Receive = {
+    case msg @ _ => println(msg)
+  }
+}

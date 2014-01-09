@@ -13,7 +13,7 @@
                 Host=localhost
                 Port=23
                 MaxBots=100000
-                CreationDelay=500
+                CreationDelay=1000
                 BotsPerStep=100
                 LogDelay=5
             </value>

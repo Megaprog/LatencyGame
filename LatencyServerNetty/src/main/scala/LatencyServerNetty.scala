@@ -10,7 +10,7 @@ import org.springframework.context.support.{ClassPathXmlApplicationContext, File
  * Date: 27.12.13
  * Time: 17:25
  */
-object LatencyGameNetty extends App {
+object LatencyServerNetty extends App {
   val DefaultContextName = "app-context.xml"
 
   val context: ApplicationContext = 
