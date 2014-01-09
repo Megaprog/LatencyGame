@@ -9,12 +9,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>LatencyGame</groupId>
-    <artifactId>LatencyBots</artifactId>
+    <artifactId>LatencyBotsAkka</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <description>Bots for telnet game where winner determine by lower latency</description>
-    <url>https://github.com/Megaprog/LatencyGame/LatencyBots</url>
+    <url>https://github.com/Megaprog/LatencyGame/LatencyBotsAkka</url>
     <developers>
         <developer>
             <name>Tomas Shestakov</name>
@@ -139,7 +139,7 @@
                     <outputFile>${project.basedir}/bin/${project.artifactId}.jar</outputFile>
                     <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>LatencyBots</mainClass>
+                            <mainClass>LatencyBotsAkka</mainClass>
                         </transformer>
                     </transformers>
                 </configuration>
