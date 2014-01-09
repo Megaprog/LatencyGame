@@ -37,7 +37,7 @@ class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep
     case AddBots =>
       (1 to math.min(maxBots - botsNumber, botsPerStep)) foreach { _ =>
         val bot = botFactory(self)
-        log.debug(s"produce $bot")
+        log.debug("produce {}", bot)
         context watch bot
         botsNumber += 1
       }
@@ -48,15 +48,15 @@ class BotsProducerActor(maxBots: Int, creationDelay: FiniteDuration, botsPerStep
       scheduleLog()
 
     case BotConnected =>
-      log.debug(s"connected $sender")
+      log.debug("connected {}", sender)
       connected +=1
 
     case BotDisconnected =>
-      log.debug(s"disconnected $sender")
+      log.debug("disconnected []", sender)
       connected -= 1
 
     case Terminated(bot) =>
-      log.debug(s"stopped $bot")
+      log.debug("stopped {}", bot)
       botsNumber -= 1
   }
 }

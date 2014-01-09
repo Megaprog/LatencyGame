@@ -27,7 +27,7 @@ class NetworkServerActor(port: Int, clientFactory: (ActorRefFactory, Init[Within
 
   def receive: Actor.Receive = {
     case CommandFailed(bind: Bind) =>
-      log.error(s"cannot bind address ${bind.localAddress.getAddress}:${bind.localAddress.getPort}")
+      log.error("cannot bind address {}:{}", bind.localAddress.getAddress, bind.localAddress.getPort)
       system shutdown()
 
     case Bound(_) => context become bound()

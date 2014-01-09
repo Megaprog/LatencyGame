@@ -29,7 +29,7 @@ class GameActor extends Actor {
 
   def receive: Actor.Receive = {
     case gameStart @ GameStart(timeout, candidates) =>
-      logger.debug(s"Game started with $candidates")
+      logger.debug("Game started with {}", candidates)
 
       gameData = Some(createGameData(sender, candidates))
       candidates foreach(_ ! gameStart)
@@ -53,13 +53,13 @@ class GameActor extends Actor {
     case Disconnected =>
       gameData foreach { data =>
         import data._
-        logger.info(s"$sender disconnected abnormally")
+        logger.info("{} disconnected abnormally" , sender)
         manager ! Disconnect(sender)
         gameOver(players.filter(_ != sender), GameOver.Reason.Disconnect)
       }
 
     case ' ' =>
-      logger.debug(s"$sender --> 'space'")
+      logger.debug("{} --> 'space'", sender)
       gameData foreach { data =>
         if (data.hunterBegin) {
           gameOver(Some(sender), GameOver.Reason.Normal)

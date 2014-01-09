@@ -32,7 +32,7 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
 
   def receive: Actor.Receive = {
     case CommandFailed(_: Connect) =>
-      log.debug(s"connection failed $self")
+      log.info("connection failed {}", self)
       context stop self
 
     case Connected(_, _) =>
@@ -53,17 +53,17 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
 
       context become handling(init)
 
-      log.debug(s"intellect is $intellect")
+      log.debug("intellect is {}", intellect)
       intellect.attach((msg: String) => pipeline ! init.Command(msg))
   }
 
   def handling(init: Init[WithinActorContext, String, String]): Actor.Receive = {
     case init.Event(data) =>
-      log.debug(s"received $data")
+      log.debug("received {}", data)
       intellect.receive(data)
 
     case _: ConnectionClosed =>
-      log.debug(s"disc from $sender")
+      log.debug("disc from {}", sender)
       producerRef ! BotDisconnected
       context stop self
   }

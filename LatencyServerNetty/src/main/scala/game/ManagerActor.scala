@@ -36,7 +36,7 @@ class ManagerActor(playersInGame: Int, timeout: FiniteDuration, logDelay: Finite
 
   def receive: Actor.Receive = {
     case GameRequest =>
-      logger.debug(s"Game request from $sender")
+      logger.debug("Game request from {}", sender)
 
       pending = sender :: pending
       if (pending.size >= playersInGame) {
