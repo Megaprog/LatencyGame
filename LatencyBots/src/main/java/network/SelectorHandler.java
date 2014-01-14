@@ -305,7 +305,7 @@ public class SelectorHandler {
         final BindCallback bindCallback = (BindCallback) serverKey.attachment();
         final ServerSocketChannel serverSocketChannel = (ServerSocketChannel) serverKey.channel();
 
-        while (serverKey.isValid()) {
+        for (int i = 1; i <= bindCallback.acceptLimitPerCycle() && serverKey.isValid(); i++) {
             try {
                 final SocketChannel socketChannel = serverSocketChannel.accept();
                 if (socketChannel == null) {
@@ -324,11 +324,11 @@ public class SelectorHandler {
     }
 
     private void readableChannel(SelectionKey selectionKey) {
-
+        ((ChannelIOCallback) selectionKey.attachment()).channelReadable((SocketChannel) selectionKey.channel());
     }
 
     private void writableChannel(SelectionKey selectionKey) {
-
+        ((ChannelIOCallback) selectionKey.attachment()).ChannelWritable((SocketChannel) selectionKey.channel());
     }
 
     /**
@@ -414,6 +414,8 @@ public class SelectorHandler {
         void beforeServerSocketBind(ServerSocket serverSocket);
 
         void bound(ServerSocketChannel serverSocketChannel, ServerChannelInterest serverChannelInterest);
+
+        int acceptLimitPerCycle();
     }
 
     public interface ChannelInterest {
@@ -515,27 +517,8 @@ public class SelectorHandler {
 
     public interface ChannelIOCallback {
 
-        void channelReadable();
+        void channelReadable(SocketChannel socketChannel);
 
-        void ChannelWritable();
-    }
-
-    public static abstract class Task implements Runnable {
-
-        @Override
-        public void run() {
-            try {
-                runImpl();
-            }
-            catch (Exception e) {
-                handleException(e);
-            }
-        }
-
-        protected void handleException(Exception e) {
-            log.error("Exception during execution of the " + this, e);
-        }
-
-        abstract protected void runImpl();
+        void ChannelWritable(SocketChannel socketChannel);
     }
 }
