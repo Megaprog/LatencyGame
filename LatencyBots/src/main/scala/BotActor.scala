@@ -59,26 +59,23 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
   }
 
   def connected(socketChannel: SocketChannel, channelInterest: ChannelInterest): Actor.Receive = {
-    val readBuffer = ByteBuffer.allocateDirect(1024)
+    val readBuffer = ByteBuffer.allocate(256)
     val reader = new BufferedReader(new InputStreamReader(new InputStream(){
       def read(): Int = if (readBuffer.hasRemaining) readBuffer.get & 0xff else -1
-    }, DefaultCharset))
-    val writeBuffer = ByteBuffer.allocateDirect(1024)
-    val writer = new OutputStreamWriter(new OutputStream {
-      def write(b: Int): Unit = writeBuffer.put(b.asInstanceOf[Byte])
-    }, DefaultCharset)
+    }, charset))
+    val writeBuffer = ByteBuffer.allocate(128)
 
     {
       case fromIntellect: String =>
         log.debug("from intellect '{}' [{}]", fromIntellect, fromIntellect.map(_.toInt).mkString)
 
         try {
-          writer.write(fromIntellect, 0, fromIntellect.length)
-          writer.flush()
+          writeBuffer.put(charset.encode(fromIntellect))
           channelInterest.enableWriteInterest()
         }
         catch {
-          case e: IOException => log.error(e, "Error during writing to the buffer")
+          case e: IOException => log.error(e, "Error during writing string to the buffer")
+          disconnect(socketChannel, reader)
         }
 
       case Read =>
@@ -97,7 +94,7 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
         }
 
         if (result < 0) {
-          disconnect(socketChannel)
+          disconnect(socketChannel, reader)
         }
         else {
           if (result > 0) {
@@ -108,12 +105,12 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
             }
             catch {
               case e: IOException =>
-                log.error(e, "Error during convert bytes to string")
+                log.error(e, "Error during extracting strings from buffer")
                 false
             }
           } match {
             case true => channelInterest.enableReadInterest()
-            case false => disconnect(socketChannel)
+            case false => disconnect(socketChannel, reader)
           }
         }
 
@@ -125,11 +122,11 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
           result = socketChannel.write(writeBuffer)
         }
         catch {
-          case e: IOException => log.error(e, "Error during reading from the channel")
+          case e: IOException => log.error(e, "Error during writing to the channel")
         }
 
         if (result < 0) {
-          disconnect(socketChannel)
+          disconnect(socketChannel, reader)
         }
         else {
           if (writeBuffer.hasRemaining) {
@@ -143,9 +140,12 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
     }
   }
 
-  def disconnect(socketChannel: SocketChannel) {
+  def disconnect(socketChannel: SocketChannel, reader: Reader) {
     socketChannel.close()
+    reader.close()
+
     log.debug("disc from {}", sender)
+
     producerRef ! BotDisconnected
     context stop self
     context become PartialFunction.empty
@@ -186,7 +186,7 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
 }
 
 object BotActor {
-  val DefaultCharset = Charset.forName("UTF-8")
+  val charset = Charset.forName("UTF-8")
 
   def factory(actorSystem: ActorRefFactory, host: String, port: Int, intellects: java.util.List[() => BotIntellect], selector: SelectorHandler) = (producerRef: ActorRef) =>
     actorSystem.actorOf(Props(classOf[BotActor], host, port, producerRef, intellects.get(Random.nextInt(intellects.size())).apply(), selector))
