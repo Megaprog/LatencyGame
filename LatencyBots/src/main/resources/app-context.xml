@@ -14,7 +14,7 @@
                 Port=23
                 MaxBots=100000
                 CreationDelay=1000
-                BotsPerStep=1000
+                BotsPerStep=2000
                 LogDelay=5
             </value>
         </property>
@@ -45,9 +45,9 @@
         <constructor-arg value="${Port}"/>
         <constructor-arg>
             <list>
-                <!--<bean class="SilentIntellect" factory-method="factory"/>-->
+                <bean class="SilentIntellect" factory-method="factory"/>
                 <bean class="QuickIntellect" factory-method="factory"/>
-                <!--<bean class="CleverIntellect" factory-method="factory"/>-->
+                <bean class="CleverIntellect" factory-method="factory"/>
             </list>
         </constructor-arg>
         <constructor-arg ref="selector"/>

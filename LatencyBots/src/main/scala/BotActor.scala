@@ -89,7 +89,11 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
           result = socketChannel.read(readBuffer)
         }
         catch {
-          case e: IOException => log.error(e, "Error during reading from the channel")
+          case e: IOException =>
+            if (!e.getMessage.contains("Программа на вашем хост-компьютере разорвала установленное подключение")
+                  && !e.getMessage.contains("Удаленный хост принудительно разорвал существующее подключение")) {
+              log.error(e, "Error during reading from the channel")
+            }
         }
 
         if (result < 0) {
