@@ -24,6 +24,7 @@ trait BotIntellect extends Intellect[String, String] {
 }
 
 class SilentIntellect extends BotIntellect {
+  //do nothing
 
   def receive(data: String) {} //do nothing
 
@@ -35,10 +36,17 @@ object SilentIntellect {
 }
 
 class QuickIntellect extends BotIntellect {
+  //writes after second receive
 
   var writerOption = Option.empty[Writer]
+  var counter = 2
 
-  def receive(data: String) {writerOption foreach (_(WinningString))}
+  def receive(data: String) {
+    counter -= 1
+    if (counter == 0) {
+      writerOption foreach (_(WinningString))
+    }
+  }
 
   def attach(writer: Writer) { writerOption = Some(writer) }
 }
@@ -48,6 +56,7 @@ object QuickIntellect {
 }
 
 class CleverIntellect extends BotIntellect {
+  //writes after receive WaitingString
 
   var writerOption = Option.empty[Writer]
   

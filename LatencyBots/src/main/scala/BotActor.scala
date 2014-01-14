@@ -23,10 +23,14 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
   import BotActor._
 
   override def preStart() {
+    log.debug("intellect is {}", intellect)
+
     selector.connect(new InetSocketAddress(host, port), new ConnectCallback {
 
       def fail(e: Exception): Unit = {
-        log.error(e, "Error during connect {}", self)
+        if (!e.getMessage.contains("maximum connections reached")) {
+          log.error(e, "Error during connect {}", self)
+        }
         self ! PoisonPill
       }
 
@@ -66,9 +70,12 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
 
     {
       case fromIntellect: String =>
+        log.debug("from intellect '{}' [{}]", fromIntellect, fromIntellect.map(_.toInt).mkString)
+
         try {
           writer.write(fromIntellect, 0, fromIntellect.length)
-
+          writer.flush()
+          channelInterest.enableWriteInterest()
         }
         catch {
           case e: IOException => log.error(e, "Error during writing to the buffer")
@@ -149,6 +156,8 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
       if (string == null) {
         return
       }
+
+      log.debug("received {}", string)
 
       intellect.receive(string)
     }
