@@ -12,9 +12,9 @@
             <value>
                 Host=localhost
                 Port=23
-                MaxBots=100000
+                MaxBots=2
                 CreationDelay=1000
-                BotsPerStep=2000
+                BotsPerStep=10
                 LogDelay=5
             </value>
         </property>
@@ -50,8 +50,14 @@
                 <!--<bean class="CleverIntellect" factory-method="factory"/>-->
             </list>
         </constructor-arg>
+        <constructor-arg ref="selector"/>
     </bean>
 
     <bean id="actorSystem" class="akka.actor.ActorSystem" factory-method="apply"/>
+
+    <bean id="selector" class="network.SelectorHandlerAkkaExecutor">
+        <constructor-arg type="akka.actor.ActorSystem" ref="actorSystem"/>
+        <constructor-arg value="akka.io.pinned-dispatcher"/>
+    </bean>
 
 </beans>

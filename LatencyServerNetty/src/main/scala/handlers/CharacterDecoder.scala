@@ -25,12 +25,12 @@ class CharacterDecoder(charset: Charset) extends ByteToMessageDecoder {
       val reader = new InputStreamReader(new ByteBufInputStream(in), charset)
 
       while (true) {
-        val byte = reader.read()
-        if (byte == -1) {
+        val char = reader.read()
+        if (char == -1) {
           return
         }
 
-        out.add(Character.valueOf(byte.toChar))
+        out.add(Character.valueOf(char.toChar))
       }
     }
   }

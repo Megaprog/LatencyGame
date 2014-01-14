@@ -3,18 +3,14 @@
  */
 
 import akka.actor._
-import akka.io._
-import akka.io.IO
-import akka.io.Tcp._
-import akka.io.Tcp.CommandFailed
-import akka.io.Tcp.Connect
-import akka.io.Tcp.Connected
-import akka.io.Tcp.Register
-import akka.io.Tcp.SO.KeepAlive
-import akka.io.Tcp.SO.TcpNoDelay
-import java.net.InetSocketAddress
-import akka.io.TcpPipelineHandler.{Init, WithinActorContext}
+import java.io._
+import java.net.{Socket, InetSocketAddress}
+import java.nio.ByteBuffer
+import java.nio.channels.SocketChannel
+import java.nio.charset.Charset
 import messages.{BotDisconnected, BotConnected}
+import network.SelectorHandler
+import network.SelectorHandler.{ChannelIOCallback, ChannelInterest, ConnectCallback}
 import pipeline.{TelnetNegotiationCutter, LineFraming}
 import scala.util.Random
 
@@ -23,55 +19,167 @@ import scala.util.Random
  * Date: 06.01.14
  * Time: 13:06
  */
-class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotIntellect) extends Actor with ActorLogging {
-  import context.system
+class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotIntellect, selector: SelectorHandler) extends Actor with ActorLogging {
+  import BotActor._
 
   override def preStart() {
-    IO(Tcp) ! Connect(new InetSocketAddress(host, port)/*, options = List(KeepAlive(on = true))*/ /*, timeout = Some(FiniteDuration(3, TimeUnit.SECONDS))*/)
+    selector.connect(new InetSocketAddress(host, port), new ConnectCallback {
+
+      def fail(e: Exception): Unit = {
+        log.error(e, "Error during connect {}", self)
+        self ! PoisonPill
+      }
+
+      def beforeSocketConnect(socket: Socket): Unit = {}
+
+      def connecting(socketChannel: SocketChannel): Unit = {}
+
+      def connected(socketChannel: SocketChannel, channelInterest: ChannelInterest): ChannelIOCallback = {
+        self ! Connected(socketChannel, channelInterest)
+
+        new ChannelIOCallback {
+          def channelReadable(socketChannel: SocketChannel): Unit = self ! Read
+          def ChannelWritable(socketChannel: SocketChannel): Unit = self ! Write
+        }
+      }
+    })
   }
 
   def receive: Actor.Receive = {
-    case CommandFailed(_: Connect) =>
-      log.info("connection failed {}", self)
-      context stop self
 
-    case Connected(_, _) =>
+    case Connected(socketChannel, channelInterest) =>
       producerRef ! BotConnected
+      intellect.attach((msg: String) => self ! msg)
 
-      val init = TcpPipelineHandler.withLogger(log,
-        new StringByteStringAdapter("utf-8") >>
-        new LineFraming(512) >>
-        new TelnetNegotiationCutter >>
-        new TcpReadWriteAdapter >>
-        new BackpressureBuffer(lowBytes = 100, highBytes = 1000, maxBytes = 1000000)
-      )
-
-      val connection = sender
-      val pipeline = context.actorOf(TcpPipelineHandler.props(init, connection, self))
-
-      connection ! Register(pipeline)
-
-      context become handling(init)
-
-      log.debug("intellect is {}", intellect)
-      intellect.attach((msg: String) => pipeline ! init.Command(msg))
+      context become connected(socketChannel, channelInterest)
   }
 
-  def handling(init: Init[WithinActorContext, String, String]): Actor.Receive = {
-    case init.Event(data) =>
-      log.debug("received {}", data)
-      intellect.receive(data)
+  def connected(socketChannel: SocketChannel, channelInterest: ChannelInterest): Actor.Receive = {
+    val readBuffer = ByteBuffer.allocateDirect(1024)
+    val reader = new BufferedReader(new InputStreamReader(new InputStream(){
+      def read(): Int = if (readBuffer.hasRemaining) readBuffer.get & 0xff else -1
+    }, DefaultCharset))
+    val writeBuffer = ByteBuffer.allocateDirect(1024)
+    val writer = new OutputStreamWriter(new OutputStream {
+      def write(b: Int): Unit = writeBuffer.put(b.asInstanceOf[Byte])
+    }, DefaultCharset)
 
-    case _: ConnectionClosed =>
-      log.debug("disc from {}", sender)
-      producerRef ! BotDisconnected
-      context stop self
+    {
+      case fromIntellect: String =>
+        try {
+          writer.write(fromIntellect, 0, fromIntellect.length)
+
+        }
+        catch {
+          case e: IOException => log.error(e, "Error during writing to the buffer")
+        }
+
+      case Read =>
+        readBuffer.clear
+
+        var result: Int = -2
+        try {
+          result = socketChannel.read(readBuffer)
+        }
+        catch {
+          case e: IOException => log.error(e, "Error during reading from the channel")
+        }
+
+        if (result < 0) {
+          disconnect(socketChannel)
+        }
+        else {
+          if (result > 0) {
+            readBuffer.flip()
+            try {
+              extractStrings(readBuffer, reader)
+              true
+            }
+            catch {
+              case e: IOException =>
+                log.error(e, "Error during convert bytes to string")
+                false
+            }
+          } match {
+            case true => channelInterest.enableReadInterest()
+            case false => disconnect(socketChannel)
+          }
+        }
+
+      case Write =>
+        writeBuffer.flip
+
+        var result: Int = -2
+        try {
+          result = socketChannel.write(writeBuffer)
+        }
+        catch {
+          case e: IOException => log.error(e, "Error during reading from the channel")
+        }
+
+        if (result < 0) {
+          disconnect(socketChannel)
+        }
+        else {
+          if (writeBuffer.hasRemaining) {
+            writeBuffer.compact
+            channelInterest.enableWriteInterest()
+          }
+          else {
+            writeBuffer.clear
+          }
+        }
+    }
+  }
+
+  def disconnect(socketChannel: SocketChannel) {
+    socketChannel.close()
+    log.debug("disc from {}", sender)
+    producerRef ! BotDisconnected
+    context stop self
+    context become PartialFunction.empty
+  }
+  
+  def extractStrings(buffer: ByteBuffer, reader: BufferedReader) {
+    skipNegotiation(buffer
+    )
+    //very simple string extraction not for production
+    while (true) {
+      val string: String = reader.readLine
+      if (string == null) {
+        return
+      }
+
+      intellect.receive(string)
+    }
+  }
+
+  def skipNegotiation(buffer: ByteBuffer) {
+    //skip telnet negotiation
+    while (buffer.hasRemaining) {
+      if (buffer.get != 0xff.toByte) {
+        buffer.position(buffer.position - 1)
+        return
+      }
+
+      if (buffer.hasRemaining) {
+        buffer.get
+      }
+      if (buffer.hasRemaining) {
+        buffer.get
+      }
+    }
   }
 }
 
 object BotActor {
+  val DefaultCharset = Charset.forName("UTF-8")
 
-  def factory(actorSystem: ActorRefFactory, host: String, port: Int, intellects: java.util.List[() => BotIntellect]) = (producerRef: ActorRef) =>
-    actorSystem.actorOf(Props(classOf[BotActor], host, port, producerRef, intellects.get(Random.nextInt(intellects.size())).apply()))
+  def factory(actorSystem: ActorRefFactory, host: String, port: Int, intellects: java.util.List[() => BotIntellect], selector: SelectorHandler) = (producerRef: ActorRef) =>
+    actorSystem.actorOf(Props(classOf[BotActor], host, port, producerRef, intellects.get(Random.nextInt(intellects.size())).apply(), selector))
+
+  case class Connected(socketChannel: SocketChannel, channelInterest: ChannelInterest)
+  case object Read
+  case object Write
 }
 
