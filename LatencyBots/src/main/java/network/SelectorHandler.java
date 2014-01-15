@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.channels.CancelledKeyException;
+import java.nio.channels.Channel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
@@ -121,6 +122,27 @@ public class SelectorHandler {
         });
     }
 
+    public void shutdown() {
+        executeInSelectorThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    try {
+                        for (SelectionKey selectionKey : selector.keys()) {
+                            closeChannelSilently(selectionKey.channel());
+                        }
+                    }
+                    finally {
+                        selector.close();
+                    }
+                }
+                catch (Exception e) {
+                    log.error("Error while closing the selector", e);
+                }
+            }
+        });
+    }
+
     protected ServerChannelInterest createServerChannelInterest(SelectionKey selectionKey) {
         return new ServerChannelInterestImpl(selectionKey);
     }
@@ -143,16 +165,16 @@ public class SelectorHandler {
     }
 
     protected interface OpsModifier {
-
         int modifyOps(int previousOps);
+
     }
-
     protected abstract static class OpsModifierBase implements OpsModifier {
-        protected final int ops;
 
+        protected final int ops;
         public OpsModifierBase(int ops) {
             this.ops = ops;
         }
+
     }
 
     protected static class EnableOps extends OpsModifierBase {
@@ -160,11 +182,11 @@ public class SelectorHandler {
         public EnableOps(int ops) {
             super(ops);
         }
-
         @Override
         public int modifyOps(int previousOps) {
             return previousOps | ops;
         }
+
     }
 
     protected static class DisableOps extends OpsModifierBase {
@@ -172,11 +194,11 @@ public class SelectorHandler {
         public DisableOps(int ops) {
             super(ops);
         }
-
         @Override
         public int modifyOps(int previousOps) {
             return previousOps & ~ops;
         }
+
     }
 
     protected void modifyInterestOps(final SelectionKey selectionKey, final OpsModifier opsModifier, final FailCallback failCallback) {
@@ -288,12 +310,7 @@ public class SelectorHandler {
             selectionKey.attach(channelIOCallback);
         }
         else {
-            try {
-                socketChannel.close();
-            }
-            catch (IOException e) {
-                //silent close channel
-            }
+            closeChannelSilently(socketChannel);
         }
     }
 
@@ -301,7 +318,7 @@ public class SelectorHandler {
         return new ChannelInterestImpl(selectionKey);
     }
 
-    private void acceptConnections(SelectionKey serverKey) {
+    protected void acceptConnections(SelectionKey serverKey) {
         final BindCallback bindCallback = (BindCallback) serverKey.attachment();
         final ServerSocketChannel serverSocketChannel = (ServerSocketChannel) serverKey.channel();
 
@@ -323,12 +340,21 @@ public class SelectorHandler {
         }
     }
 
-    private void readableChannel(SelectionKey selectionKey) {
+    protected void readableChannel(SelectionKey selectionKey) {
         ((ChannelIOCallback) selectionKey.attachment()).channelReadable((SocketChannel) selectionKey.channel());
     }
 
-    private void writableChannel(SelectionKey selectionKey) {
+    protected void writableChannel(SelectionKey selectionKey) {
         ((ChannelIOCallback) selectionKey.attachment()).ChannelWritable((SocketChannel) selectionKey.channel());
+    }
+
+    protected void closeChannelSilently(Channel channel) {
+        try {
+            channel.close();
+        }
+        catch (IOException e) {
+            //silent close channel
+        }
     }
 
     /**

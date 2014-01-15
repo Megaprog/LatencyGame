@@ -29,7 +29,7 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
 
       def fail(e: Exception): Unit = {
         if (!e.getMessage.contains("maximum connections reached")) {
-          log.error(e, "Error during connect {}", self)
+          log.error(e, "Connection error {}", self)
         }
         self ! PoisonPill
       }
