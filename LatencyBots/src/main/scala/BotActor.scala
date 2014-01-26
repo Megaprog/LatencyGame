@@ -42,8 +42,8 @@ class BotActor(host: String, port: Int, producerRef: ActorRef, intellect: BotInt
         self ! Connected(socketChannel, channelInterest)
 
         new ChannelIOCallback {
-          def channelReadable(socketChannel: SocketChannel): Unit = self ! Read
-          def ChannelWritable(socketChannel: SocketChannel): Unit = self ! Write
+          def channelReadable(): Unit = self ! Read
+          def ChannelWritable(): Unit = self ! Write
         }
       }
     })

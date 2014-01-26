@@ -341,11 +341,11 @@ public class SelectorHandler {
     }
 
     protected void readableChannel(SelectionKey selectionKey) {
-        ((ChannelIOCallback) selectionKey.attachment()).channelReadable((SocketChannel) selectionKey.channel());
+        ((ChannelIOCallback) selectionKey.attachment()).channelReadable();
     }
 
     protected void writableChannel(SelectionKey selectionKey) {
-        ((ChannelIOCallback) selectionKey.attachment()).ChannelWritable((SocketChannel) selectionKey.channel());
+        ((ChannelIOCallback) selectionKey.attachment()).ChannelWritable();
     }
 
     protected void closeChannelSilently(Channel channel) {
@@ -543,8 +543,8 @@ public class SelectorHandler {
 
     public interface ChannelIOCallback {
 
-        void channelReadable(SocketChannel socketChannel);
+        void channelReadable();
 
-        void ChannelWritable(SocketChannel socketChannel);
+        void ChannelWritable();
     }
 }
