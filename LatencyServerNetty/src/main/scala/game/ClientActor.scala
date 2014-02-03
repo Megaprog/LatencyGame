@@ -68,7 +68,7 @@ class ClientActor(channel: SocketChannel, managerRef: ActorRef) extends Actor {
   }
 
   def send(string: String) {
-    channel.writeAndFlush(string + System.lineSeparator())
+    channel.writeAndFlush(string + "\r\n")
   }
 
   def disconnect() {

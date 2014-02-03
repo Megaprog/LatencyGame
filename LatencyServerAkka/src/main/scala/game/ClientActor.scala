@@ -75,7 +75,7 @@ class ClientActor(init: Init[WithinActorContext, String, String], managerRef: Ac
   }
 
   def send(string: String) {
-    pipeline ! init.Command(string + System.lineSeparator())
+    pipeline ! init.Command(string + "\r\n")
   }
 
   def disconnect() {
